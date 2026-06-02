@@ -10,6 +10,7 @@ import { EducationSection } from "@/components/EducationSection";
 import { TimelineSection } from "@/components/TimelineSection";
 import { TechStackSection } from "@/components/TechStackSection";
 import { ContactSection, Footer } from "@/components/ContactSection";
+import { ChatOrb } from "@/components/chatbot/ChatOrb";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -49,6 +50,7 @@ function Index() {
       <TechStackSection />
       <ContactSection />
       <Footer />
+      <ChatOrb />
     </main>
   );
 }

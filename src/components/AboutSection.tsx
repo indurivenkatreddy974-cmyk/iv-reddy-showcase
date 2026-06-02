@@ -2,14 +2,15 @@
 import { FadeIn } from "./FadeIn";
 import { AnimatedText } from "./AnimatedText";
 import { CtaButton } from "./CtaButton";
+import { useContent } from "@/lib/content-store";
 
 export function AboutSection() {
+  const about = useContent((s) => s.about);
   return (
     <section
       id="about"
       className="relative min-h-screen flex flex-col items-center justify-center px-5 sm:px-8 md:px-10 py-20 overflow-hidden"
     >
-      {/* Corner decorations */}
       <FadeIn delay={0.1} x={-80} y={0} duration={0.9} className="absolute top-[4%] left-[1%] sm:left-[2%] md:left-[4%] w-[120px] sm:w-[160px] md:w-[210px] pointer-events-none">
         <img src="https://shrug-person-78902957.figma.site/_components/v2/ebb2b8f25d8e24d5f0a5ca8af4c950de81aa2fd7/moon_icon.11395d36.png" alt="" />
       </FadeIn>
@@ -29,11 +30,11 @@ export function AboutSection() {
             className="hero-heading font-black uppercase leading-none tracking-tight text-center"
             style={{ fontSize: "clamp(3rem, 12vw, 160px)" }}
           >
-            About Me
+            {about.heading}
           </h2>
         </FadeIn>
 
-        <AnimatedText text="I am Induri Venkata Reddy, a passionate Full Stack Developer and digital creator focused on building immersive web experiences that combine performance, design, and storytelling. My work blends clean engineering with cinematic visual thinking, creating products that feel modern, memorable, and purposeful." />
+        <AnimatedText key={about.body} text={about.body} />
 
         <div className="mt-4 sm:mt-8">
           <CtaButton href="#contact">Contact Me</CtaButton>
