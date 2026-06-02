@@ -84,6 +84,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:description", content: "Cinematic portfolio of Induri Venkata Reddy." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
+    ],
     links: [
       {
         rel: "stylesheet",
