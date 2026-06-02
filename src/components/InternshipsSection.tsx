@@ -1,28 +1,9 @@
 "use client";
 import { FadeIn } from "./FadeIn";
-
-const INTERNSHIPS = [
-  {
-    company: "Tech Innovation Labs",
-    role: "Full Stack Developer Intern",
-    duration: "2025 — Present",
-    contributions: "Built modular React components, contributed to API integrations, and improved performance on key product flows.",
-  },
-  {
-    company: "Digital Studio Collective",
-    role: "Frontend Engineering Intern",
-    duration: "2024 — 2025",
-    contributions: "Crafted motion-driven landing pages, collaborated on design systems, and shipped responsive interfaces.",
-  },
-  {
-    company: "Open Source Contributions",
-    role: "Independent Contributor",
-    duration: "Ongoing",
-    contributions: "Published utilities, improved documentation, and engaged with developer communities around modern web tooling.",
-  },
-];
+import { useContent } from "@/lib/content-store";
 
 export function InternshipsSection() {
+  const internships = useContent((s) => s.internships);
   return (
     <section id="internships" className="px-5 sm:px-8 md:px-10 py-24 sm:py-32 relative" style={{ background: "#0C0C0C" }}>
       <FadeIn delay={0} y={40} className="text-center mb-6">
@@ -41,8 +22,8 @@ export function InternshipsSection() {
       </FadeIn>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5 md:gap-6 max-w-6xl mx-auto">
-        {INTERNSHIPS.map((item, i) => (
-          <FadeIn key={item.company} delay={i * 0.15} y={40}>
+        {internships.map((item, i) => (
+          <FadeIn key={item.id} delay={i * 0.15} y={40}>
             <div className="tech-card rounded-3xl p-6 md:p-8 h-full flex flex-col gap-4">
               <span className="text-[10px] tracking-[0.4em] uppercase" style={{ color: "#4a9eff" }}>
                 {item.duration}
