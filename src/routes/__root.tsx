@@ -77,15 +77,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { title: "IV Reddy — Digital Craft" },
+      { name: "description", content: "IV Reddy — Full Stack Developer crafting cinematic digital experiences." },
+      { name: "author", content: "IV Reddy" },
+      { property: "og:title", content: "IV Reddy — Digital Craft" },
+      { property: "og:description", content: "Cinematic portfolio of Induri Venkata Reddy." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-      { name: "twitter:site", content: "@Lovable" },
-    ],
     links: [
       {
         rel: "stylesheet",
