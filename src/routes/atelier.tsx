@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { useAdminAuth } from "@/lib/admin-auth";
 
-export const Route = createFileRoute("/__atelier")({
+export const Route = createFileRoute("/atelier")({
   head: () => ({
     meta: [
       { title: "—" },

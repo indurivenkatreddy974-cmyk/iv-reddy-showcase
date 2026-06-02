@@ -31,7 +31,7 @@ export function SecretModal({ open, onClose }: { open: boolean; onClose: () => v
       setName("");
       setCode("");
       setStatus("idle");
-      navigate({ to: "/__atelier" });
+      navigate({ to: "/atelier" });
     }, 700);
   };
 
