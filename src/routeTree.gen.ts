@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as AtelierRouteImport } from './routes/atelier'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ApiPublicMSplatRouteImport } from './routes/api/public/m/$'
 
 const AtelierRoute = AtelierRouteImport.update({
   id: '/atelier',
@@ -22,31 +23,40 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicMSplatRoute = ApiPublicMSplatRouteImport.update({
+  id: '/api/public/m/$',
+  path: '/api/public/m/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/atelier': typeof AtelierRoute
+  '/api/public/m/$': typeof ApiPublicMSplatRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/atelier': typeof AtelierRoute
+  '/api/public/m/$': typeof ApiPublicMSplatRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/atelier': typeof AtelierRoute
+  '/api/public/m/$': typeof ApiPublicMSplatRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/atelier'
+  fullPaths: '/' | '/atelier' | '/api/public/m/$'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/atelier'
-  id: '__root__' | '/' | '/atelier'
+  to: '/' | '/atelier' | '/api/public/m/$'
+  id: '__root__' | '/' | '/atelier' | '/api/public/m/$'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AtelierRoute: typeof AtelierRoute
+  ApiPublicMSplatRoute: typeof ApiPublicMSplatRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -65,12 +75,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/m/$': {
+      id: '/api/public/m/$'
+      path: '/api/public/m/$'
+      fullPath: '/api/public/m/$'
+      preLoaderRoute: typeof ApiPublicMSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AtelierRoute: AtelierRoute,
+  ApiPublicMSplatRoute: ApiPublicMSplatRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
