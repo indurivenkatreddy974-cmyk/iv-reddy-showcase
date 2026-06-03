@@ -136,6 +136,7 @@ export function AdminShell() {
 
 function TabPanel({ tab }: { tab: TabKey }) {
   switch (tab) {
+    case "showcase": return <ShowcaseManager />;
     case "hero": return <HeroEditor />;
     case "about": return <AboutEditor />;
     case "projects": return <ProjectsEditor />;

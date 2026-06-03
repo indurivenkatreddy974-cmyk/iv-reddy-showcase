@@ -1,0 +1,5 @@
+/* Add shine sweep keyframe used by cert cards */
+@keyframes shineSweep {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
