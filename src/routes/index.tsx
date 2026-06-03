@@ -11,6 +11,7 @@ import { TimelineSection } from "@/components/TimelineSection";
 import { TechStackSection } from "@/components/TechStackSection";
 import { ContactSection, Footer } from "@/components/ContactSection";
 import { ChatOrb } from "@/components/chatbot/ChatOrb";
+import { FeaturedWorkSection } from "@/components/FeaturedWorkSection";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -40,6 +41,7 @@ function Index() {
     <main style={{ background: "#0C0C0C", overflowX: "clip" }} className="min-h-screen">
       <Navbar />
       <HeroSection />
+      <FeaturedWorkSection />
       <MarqueeSection />
       <AboutSection />
       <ServicesSection />

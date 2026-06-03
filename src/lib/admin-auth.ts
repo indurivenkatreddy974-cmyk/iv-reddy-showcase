@@ -1,77 +1,87 @@
 import { create } from "zustand";
-
-// SHA-256 hashes of default credentials. Defaults: name "Reddy" / code "Venkatreddy60@".
-// Hashes are computed at module load from env-overrideable values so plaintext never sits in the bundle as a string match.
-const DEFAULT_NAME_HASH = "f7bbf3edf2b34e44a6f9cdd5cd4f6b1a4f8c8b50a6d0f1c9a8b75f4f54b0a3a1"; // placeholder
-const DEFAULT_CODE_HASH = "ce6d6ef5b18db0c6c3f0a1a9b6e93d6e9c2c3a1a76f8b6d9e9c1f0a5e3a4b5c6"; // placeholder
-
-// We compute real hashes lazily at runtime against expected values so the bundle still contains plaintext only via env.
-const EXPECTED_NAME = (import.meta.env.VITE_ADMIN_NAME as string | undefined) ?? "Reddy";
-const EXPECTED_CODE = (import.meta.env.VITE_ADMIN_CODE as string | undefined) ?? "Venkatreddy60@";
-
-async function sha256(input: string): Promise<string> {
-  const buf = new TextEncoder().encode(input);
-  const hash = await crypto.subtle.digest("SHA-256", buf);
-  return Array.from(new Uint8Array(hash))
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
-}
-
-let cachedNameHash: string | null = null;
-let cachedCodeHash: string | null = null;
-
-async function getExpectedHashes() {
-  if (!cachedNameHash) cachedNameHash = await sha256(EXPECTED_NAME.trim().toLowerCase());
-  if (!cachedCodeHash) cachedCodeHash = await sha256(EXPECTED_CODE);
-  return { name: cachedNameHash, code: cachedCodeHash };
-}
-
-export async function verifyCredentials(name: string, code: string): Promise<boolean> {
-  const [nameH, codeH, expected] = await Promise.all([
-    sha256(name.trim().toLowerCase()),
-    sha256(code),
-    getExpectedHashes(),
-  ]);
-  return nameH === expected.name && codeH === expected.code;
-}
-
-// Silence unused placeholder warnings (kept for clarity).
-void DEFAULT_NAME_HASH;
-void DEFAULT_CODE_HASH;
-
-const SESSION_KEY = "iv-admin-session";
+import { supabase } from "@/integrations/supabase/client";
 
 type AuthState = {
   authed: boolean;
-  unlock: () => void;
-  lock: () => void;
-  hydrate: () => void;
+  isAdmin: boolean;
+  userId: string | null;
+  email: string | null;
+  loading: boolean;
+  refresh: () => Promise<void>;
+  signIn: (email: string, password: string) => Promise<{ error?: string }>;
+  signUp: (email: string, password: string) => Promise<{ error?: string }>;
+  signOut: () => Promise<void>;
+  claimAdmin: () => Promise<{ ok: boolean; error?: string }>;
 };
 
-export const useAdminAuth = create<AuthState>((set) => ({
+async function loadRole(userId: string): Promise<boolean> {
+  const { data } = await supabase
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", userId)
+    .eq("role", "admin")
+    .maybeSingle();
+  return !!data;
+}
+
+export const useAdminAuth = create<AuthState>((set, get) => ({
   authed: false,
-  unlock: () => {
-    if (typeof window !== "undefined") sessionStorage.setItem(SESSION_KEY, "1");
-    set({ authed: true });
+  isAdmin: false,
+  userId: null,
+  email: null,
+  loading: true,
+  refresh: async () => {
+    const { data } = await supabase.auth.getUser();
+    const user = data.user;
+    if (!user) {
+      set({ authed: false, isAdmin: false, userId: null, email: null, loading: false });
+      return;
+    }
+    const isAdmin = await loadRole(user.id);
+    set({ authed: true, isAdmin, userId: user.id, email: user.email ?? null, loading: false });
   },
-  lock: () => {
-    if (typeof window !== "undefined") sessionStorage.removeItem(SESSION_KEY);
-    set({ authed: false });
+  signIn: async (email, password) => {
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) return { error: error.message };
+    await get().refresh();
+    return {};
   },
-  hydrate: () => {
-    if (typeof window === "undefined") return;
-    set({ authed: sessionStorage.getItem(SESSION_KEY) === "1" });
+  signUp: async (email, password) => {
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { emailRedirectTo: typeof window !== "undefined" ? window.location.origin + "/atelier" : undefined },
+    });
+    if (error) return { error: error.message };
+    await get().refresh();
+    return {};
+  },
+  signOut: async () => {
+    await supabase.auth.signOut();
+    set({ authed: false, isAdmin: false, userId: null, email: null });
+  },
+  claimAdmin: async () => {
+    const { data, error } = await supabase.rpc("claim_first_admin");
+    if (error) return { ok: false, error: error.message };
+    if (!data) return { ok: false, error: "Admin already exists" };
+    await get().refresh();
+    return { ok: true };
   },
 }));
 
-export type AccessLogEntry = {
-  time: string;
-  userAgent: string;
-  platform: string;
-};
+// Subscribe to auth changes once (client-only)
+if (typeof window !== "undefined") {
+  supabase.auth.onAuthStateChange(() => {
+    void useAdminAuth.getState().refresh();
+  });
+  void useAdminAuth.getState().refresh();
+}
 
-const LOG_KEY = "iv-admin-access-log";
-
+// Legacy compat for any leftover imports
+export async function verifyCredentials(): Promise<boolean> {
+  return false;
+}
+export type AccessLogEntry = { time: string; userAgent: string; platform: string };
 export function recordAccess(): AccessLogEntry {
   const entry: AccessLogEntry = {
     time: new Date().toISOString(),
@@ -79,14 +89,14 @@ export function recordAccess(): AccessLogEntry {
     platform: typeof navigator !== "undefined" ? navigator.platform : "unknown",
   };
   if (typeof window !== "undefined") {
-    const existing: AccessLogEntry[] = JSON.parse(localStorage.getItem(LOG_KEY) ?? "[]");
+    const key = "iv-admin-access-log";
+    const existing: AccessLogEntry[] = JSON.parse(localStorage.getItem(key) ?? "[]");
     existing.unshift(entry);
-    localStorage.setItem(LOG_KEY, JSON.stringify(existing.slice(0, 50)));
+    localStorage.setItem(key, JSON.stringify(existing.slice(0, 50)));
   }
   return entry;
 }
-
 export function getAccessLog(): AccessLogEntry[] {
   if (typeof window === "undefined") return [];
-  return JSON.parse(localStorage.getItem(LOG_KEY) ?? "[]");
+  return JSON.parse(localStorage.getItem("iv-admin-access-log") ?? "[]");
 }

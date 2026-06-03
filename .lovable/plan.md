@@ -1,83 +1,80 @@
-# Cinematic Chatbot + Hidden Admin Portal
+## Featured Work CMS — Plan
 
-## Overview
-Replace current chatbot with a premium floating glass orb. Add a hidden command (`open the secret`) inside the chat that triggers a secure modal. Correct credentials unlock a full Admin Portal that lets you edit every section of the portfolio live, persisted locally — no more re-prompting Lovable for content changes.
+### 1. Enable Lovable Cloud
+Provision database, storage, auth. Required for cross-device persistence, video uploads, public URLs, and server-side media processing.
 
-## Architecture
+### 2. Database schema (one migration)
+Tables in `public`, all with grants + RLS:
+- `showcase_items` — `id, kind ('project'|'certification'|'achievement'|'video'), title, description, thumbnail_url, media_url, live_url, github_url, tech (text[]), issuer, issue_date, verify_url, featured (bool), sort_order (int), owner_id (uuid), created_at`
+- `media_assets` — `id, owner_id, kind ('image'|'video'|'pdf'|'other'), original_url, webp_url, poster_url, width, height, duration, size_bytes, mime, created_at`
+- `showcase_settings` — single row per owner: `layout ('grid'|'carousel'|'masonry'|'featured'), featured_projects_first, featured_certs_first`
+- `user_roles` + `app_role` enum + `has_role()` security-definer fn (per project rules)
 
-### Content store (single source of truth)
-- New file `src/lib/content-store.ts` — Zustand store + localStorage persistence holding ALL editable content:
-  - hero (title, name, subtitle, role, CTAs)
-  - about (heading, body, highlights)
-  - projects[] (title, desc, image, live, github, tech[])
-  - internships[], education[], timeline[], techStack[]
-  - contact (email, socials, CTA text)
-  - media (profile photo, resume URL, project assets) — stored as base64 data URLs in localStorage
-- All section components refactored to read from the store instead of hardcoded constants. Defaults seeded from current content so first load is identical.
-- Edits propagate instantly through React subscription → live preview everywhere.
+RLS:
+- Public SELECT on `showcase_items` and `showcase_settings` (it's a portfolio — visitors must read).
+- INSERT/UPDATE/DELETE restricted to `has_role(auth.uid(),'admin')`.
+- `media_assets` SELECT public, writes admin-only.
 
-### Auth (secret access)
-- Credentials are NOT hardcoded in source. Stored as SHA-256 hash in a config file + verified client-side. Default seed: name `Reddy`, code `Venkatreddy60@` (hashed at build).
-- Session token in `sessionStorage` (expires on tab close).
-- Note for the user: pure client-side auth is by nature inspectable. For real security we'd enable Lovable Cloud later — the architecture is prepared (single `useAdminAuth` hook to swap).
+### 3. Storage buckets
+- `showcase-media` (public) — images, videos, PDFs.
 
-### Access log
-- Each successful unlock writes `{ time, userAgent, platform }` to `localStorage.adminAccessLog[]`.
-- Visible inside the Admin Portal "Access Log" tab. Email integration left as a TODO stub in `src/lib/admin-notify.ts`.
+### 4. Replace client-only auth with real auth
+- Drop SHA-256 secret-modal gate. New flow: secret chatbot command → `/atelier/login` email+password sign-in → checks `has_role('admin')` → `/atelier`.
+- First-run bootstrap: SQL seeds an admin row for the user's email (asked via secret/env), OR a "claim admin" page that grants admin if no admin exists yet.
+- Keep "open the secret" chatbot trigger so the secret entry UX survives.
 
-## Chatbot (redesign)
+### 5. Server functions (`src/lib/showcase.functions.ts`)
+- `listShowcase()` public — returns items + settings.
+- `upsertShowcaseItem`, `deleteShowcaseItem`, `reorderShowcase`, `toggleFeatured` — admin-gated via `requireSupabaseAuth` + `has_role` check.
+- `getSignedUpload({ filename, mime })` — admin-gated, returns Supabase signed upload URL.
+- `processUploadedMedia({ path, kind })` — admin-gated. For images: download, generate WebP + responsive variants via `@cf-wasm/photon` (WASM, Worker-safe), re-upload. For videos: store original, extract first-frame poster via client-side capture (server-side ffmpeg is not Worker-compatible — see note below). Returns `media_assets` row.
 
-`src/components/chatbot/`
-- `ChatOrb.tsx` — floating bottom-right orb. Glass + silver rim + electric-blue glow. Framer Motion: breathing scale, Y float, glow pulse, magnetic hover, click morph.
-- `ChatPanel.tsx` — opens with blur+scale+spring. Glass rounded panel. Mobile = full-width sheet; desktop = floating 380×560 modal.
-- Greeting "Hello — How may I help?" + quick chips: Projects · Resume · Contact · Experience (smooth scroll to sections).
-- Glass input with animated placeholder cycle.
-- Command parser: `open the secret` (case-insensitive, trimmed) → bot replies "Enter Secret Code" and triggers `SecretModal`. Command excluded from chips/suggestions.
+**Honest scope note on "full pipeline":** Cloudflare Workers (the runtime) does not support `sharp`, `ffmpeg`, or native binaries. Realistic edge-compatible pipeline:
+- ✅ Image resize / WebP / responsive variants (WASM via `@cf-wasm/photon`)
+- ✅ Lazy loading, signed uploads, streaming playback via Supabase Storage range requests
+- ⚠️ Video transcoding / HLS — NOT possible on Workers. Videos stored as-is and streamed via Supabase Storage. To get true transcoding we'd need an external service (Mux, Cloudflare Stream, Bunny). Recommend deferring or wiring Mux later.
+- ✅ Video poster: captured client-side from first frame at upload time, then uploaded alongside.
 
-## Secret modal
+### 6. Featured Work section (frontend)
+New `src/components/FeaturedWorkSection.tsx` mounted in `index.tsx` directly below Hero, above existing Marquee/Projects (keep them).
+- Reads via TanStack Query (`listShowcase` server fn).
+- Header: "Featured Work" / "Selected projects, certifications, achievements, and digital experiences."
+- Layout switcher driven by `showcase_settings.layout`: Grid / Carousel (embla) / Masonry (CSS columns) / Featured Hero.
+- Card types: ProjectCard, CertCard, AchievementCard, VideoCard — each with framer-motion hover (scale, glow, blur expand, image zoom).
+- VideoCard → click opens modal player with fullscreen + controls.
 
-`src/components/chatbot/SecretModal.tsx`
-- Glass card, silver border glow, cinematic blur backdrop.
-- Fields: Name, Secret Code (masked).
-- Wrong → shake + red glow. Correct → silver/blue success sweep → routes to `/__atelier` (obscured path, no nav link).
+### 7. Admin Portal — Media & Showcase Manager
+New tab in `AdminShell.tsx`: **Media & Showcase**.
+- Sub-tabs: Items · Media Library · Settings
+- **Items**: list with kind filter; per-row drag-reorder (dnd-kit), featured toggle, edit dialog (kind-specific fields), delete, instant preview thumbnail.
+- **Media Library**: drag-drop multi-upload zone (react-dropzone), grid of uploaded assets with preview, replace, delete, copy URL. Client-side image compression before upload (browser-image-compression). Video poster captured via `<video>` + canvas at upload time. Upload progress bar per file.
+- **Settings**: radio for layout mode + checkboxes for "featured first" toggles.
+- Live preview: every save invalidates the showcase query; main site reflects instantly.
 
-## Admin Portal
-
-Route: `src/routes/__atelier.tsx` (no nav exposure; protected by `useAdminAuth` — unauth visitors get bounced silently to `/`).
-
-Layout: sidebar (Hero · About · Projects · Internships · Education · Timeline · Tech · Contact · Media · Access Log) + main edit canvas. Notion/Apple-settings vibe, matches portfolio theme (deep black, midnight blue, silver glass).
-
-Per-section editors (all with live preview thumbnail at top):
-- Text fields with debounced autosave
-- Projects/Internships/Education/Timeline/Tech: list with add / edit-in-place / delete / drag-reorder (dnd-kit)
-- Media tab: upload images & resume → base64 in store with preview/replace/delete
-- Soft reveal, hover elevation, panel slide micro-interactions
-
-## Files
+### 8. Files
 
 Create:
-- `src/lib/content-store.ts`
-- `src/lib/admin-auth.ts`, `src/lib/admin-notify.ts`
-- `src/components/chatbot/ChatOrb.tsx`
-- `src/components/chatbot/ChatPanel.tsx`
-- `src/components/chatbot/SecretModal.tsx`
-- `src/components/admin/AdminShell.tsx`
-- `src/components/admin/editors/{Hero,About,Projects,Internships,Education,Timeline,Tech,Contact,Media,AccessLog}Editor.tsx`
-- `src/routes/__atelier.tsx`
+- supabase migration (tables, RLS, grants, roles)
+- `src/lib/showcase.functions.ts`
+- `src/lib/media.server.ts` (image WASM processing helpers, imported only inside handlers)
+- `src/components/FeaturedWorkSection.tsx` + `cards/{Project,Cert,Achievement,Video}Card.tsx` + `VideoModal.tsx`
+- `src/components/admin/editors/ShowcaseEditor.tsx` + `MediaLibrary.tsx` + `ShowcaseSettings.tsx`
+- `src/routes/atelier.login.tsx` (real auth)
 
 Modify:
-- `src/routes/index.tsx` — mount `<ChatOrb />`, remove old chatbot
-- All section components → read from `useContent()` store
-- `src/routes/__root.tsx` — update title to "IV Reddy — Digital Craft"
+- `src/lib/admin-auth.ts` → wrap Supabase auth + role check (keep `useAdminAuth` API shape)
+- `src/components/chatbot/SecretModal.tsx` → routes to `/atelier/login`
+- `src/components/admin/AdminShell.tsx` → add Media & Showcase tab
+- `src/routes/index.tsx` → mount `<FeaturedWorkSection />` under Hero
 
-Install:
-- `zustand`, `@dnd-kit/core`, `@dnd-kit/sortable`
+Install: `@supabase/supabase-js` (auto via Cloud), `embla-carousel-react`, `react-dropzone`, `browser-image-compression`, `@cf-wasm/photon`.
 
-## Key decisions to confirm
+### 9. Open decisions
+1. **Admin bootstrap**: the secret-code modal granted you access before. With real auth, how do you want first admin set?  
+   a) I create a "claim admin" page — first signed-in user becomes admin (one-time).  
+   b) You give me an email now and I seed an admin row in the migration.  
+   c) Keep an additional client-side gate using the existing secret code on top of email/password.
+2. **Video transcoding**: skip for now (videos uploaded & streamed as-is, max ~50MB recommended) — or plan a follow-up to wire Mux/Cloudflare Stream?
+3. **Keep current Projects section** below Featured Work, or eventually merge them? (You said keep — confirming both will show until you decide.)
 
-1. **Persistence**: localStorage only (works immediately, but data is per-browser — edits on your phone won't show on someone else's view). For cross-device persistent edits we'd need Lovable Cloud. **Proceed with localStorage now?**
-2. **Default credentials seeded as `Reddy` / `Venkatreddy60@`** (hashed, not plaintext in source). OK?
-3. **Admin route path** `/__atelier` — obscure but discoverable if someone reads the route tree. Acceptable since the real gate is the password.
-4. **Access notifications**: stub only now (logged in-portal). Email wiring deferred until Cloud is enabled.
-
-Reply "go" to build, or adjust any of the four points above.
+Reply with answers (or just "go" + your bootstrap choice for #1) and I'll build.

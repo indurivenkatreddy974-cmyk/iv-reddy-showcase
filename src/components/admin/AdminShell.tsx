@@ -4,8 +4,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "@tanstack/react-router";
 import {
   User, FileText, FolderKanban, Briefcase, GraduationCap, Activity,
-  Cpu, Mail, Image as ImgIcon, Shield, LogOut, Eye, RotateCcw, Plus, Trash2, GripVertical
+  Cpu, Mail, Image as ImgIcon, Shield, LogOut, Eye, RotateCcw, Plus, Trash2, GripVertical, Sparkles
 } from "lucide-react";
+import { ShowcaseManager } from "./ShowcaseManager";
 import { useContent, newId, type Project, type Internship, type Education, type TimelineItem } from "@/lib/content-store";
 import { useAdminAuth, getAccessLog, type AccessLogEntry } from "@/lib/admin-auth";
 import {
@@ -18,10 +19,11 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 
 type TabKey =
-  | "hero" | "about" | "projects" | "internships" | "education"
+  | "showcase" | "hero" | "about" | "projects" | "internships" | "education"
   | "timeline" | "tech" | "contact" | "media" | "log";
 
 const TABS: { key: TabKey; label: string; icon: typeof User }[] = [
+  { key: "showcase", label: "Media & Showcase", icon: Sparkles },
   { key: "hero", label: "Hero", icon: User },
   { key: "about", label: "About", icon: FileText },
   { key: "projects", label: "Projects", icon: FolderKanban },
@@ -35,10 +37,10 @@ const TABS: { key: TabKey; label: string; icon: typeof User }[] = [
 ];
 
 export function AdminShell() {
-  const [tab, setTab] = useState<TabKey>("hero");
+  const [tab, setTab] = useState<TabKey>("showcase");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const navigate = useNavigate();
-  const lock = useAdminAuth((s) => s.lock);
+  const lock = useAdminAuth((s) => s.signOut);
   const reset = useContent((s) => s.reset);
 
   return (
@@ -134,6 +136,7 @@ export function AdminShell() {
 
 function TabPanel({ tab }: { tab: TabKey }) {
   switch (tab) {
+    case "showcase": return <ShowcaseManager />;
     case "hero": return <HeroEditor />;
     case "about": return <AboutEditor />;
     case "projects": return <ProjectsEditor />;
