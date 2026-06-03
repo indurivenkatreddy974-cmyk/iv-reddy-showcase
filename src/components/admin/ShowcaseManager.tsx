@@ -474,60 +474,6 @@ function UploadDropzone({ onUploaded }: { onUploaded: () => void }) {
       update({ status: "error", error: e instanceof Error ? e.message : "Failed" });
     }
   }, [sign, register, onUploaded]);
-    const jobId = Math.random().toString(36).slice(2, 10);
-    setJobs((j) => [...j, { id: jobId, name: file.name, progress: 0, status: "uploading" }]);
-    const update = (patch: Partial<UploadJob>) => setJobs((js) => js.map((j) => (j.id === jobId ? { ...j, ...patch } : j)));
-
-    try {
-      let processed: File = file;
-      let posterFile: File | null = null;
-      let kind: "image" | "video" | "pdf" | "other" = "other";
-      let width: number | null = null;
-      let height: number | null = null;
-      let duration: number | null = null;
-
-      if (file.type.startsWith("image/")) {
-        kind = "image";
-        processed = await imageCompression(file, { maxSizeMB: 2, maxWidthOrHeight: 2400, fileType: "image/webp", useWebWorker: true });
-        const dims = await getImageDims(processed);
-        width = dims.w; height = dims.h;
-      } else if (file.type.startsWith("video/")) {
-        kind = "video";
-        const meta = await getVideoMeta(file);
-        width = meta.w; height = meta.h; duration = meta.duration;
-        posterFile = meta.poster;
-      } else if (file.type === "application/pdf") {
-        kind = "pdf";
-      }
-
-      const safeName = sanitizeFilename(kind === "image" ? processed.name.replace(/\.[^.]+$/, ".webp") : file.name);
-      const signed = await sign({ data: { filename: safeName, mime: processed.type || file.type } });
-      update({ progress: 10 });
-
-      await uploadToSignedUrl(signed.path, processed, () => update({ progress: 60 }));
-
-      let posterPath: string | null = null;
-      if (posterFile) {
-        const psafe = sanitizeFilename(`poster-${file.name.replace(/\.[^.]+$/, ".webp")}`);
-        const psigned = await sign({ data: { filename: psafe, mime: posterFile.type } });
-        await uploadToSignedUrl(psigned.path, posterFile, () => {});
-        posterPath = psigned.path;
-      }
-
-      update({ progress: 90 });
-      await register({
-        data: {
-          kind, name: file.name, storage_path: signed.path, poster_path: posterPath,
-          width, height, duration_seconds: duration, size_bytes: processed.size, mime: processed.type,
-        },
-      });
-      update({ progress: 100, status: "done" });
-      onUploaded();
-      setTimeout(() => setJobs((js) => js.filter((j) => j.id !== jobId)), 1500);
-    } catch (e) {
-      update({ status: "error", error: e instanceof Error ? e.message : "Failed" });
-    }
-  }, [sign, register, onUploaded]);
 
   const onDrop = useCallback((accepted: File[]) => { accepted.forEach((f) => void upload(f)); }, [upload]);
   const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop, multiple: true });
@@ -572,20 +518,6 @@ function UploadDropzone({ onUploaded }: { onUploaded: () => void }) {
   );
 }
 
-async function uploadToSignedUrl(path: string, file: File, onProgress: () => void) {
-  const { error } = await supabase.storage.from("showcase-media").uploadToSignedUrl(path, await getSignedToken(path), file, {
-    contentType: file.type, upsert: false,
-  });
-  onProgress();
-  if (error) throw error;
-}
-
-// We don't have the token stored; refactor: pass token via signMediaUpload directly.
-// Workaround: re-sign and use uploadToSignedUrl needs token; instead use direct fetch PUT to signedUrl.
-// Replacing with direct PUT below:
-async function getSignedToken(_path: string): Promise<string> {
-  throw new Error("not used");
-}
 
 function sanitizeFilename(name: string): string {
   return name.replace(/[^a-zA-Z0-9._-]/g, "_").slice(0, 180);
