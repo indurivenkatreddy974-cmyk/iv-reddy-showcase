@@ -114,7 +114,8 @@ function ItemsManager() {
   const invalidate = () => qc.invalidateQueries({ queryKey: ["showcase"] });
 
   const upsertMut = useMutation({
-    mutationFn: (payload: Partial<Item>) => upsert({ data: payload as Parameters<typeof upsert>[0]["data"] }),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    mutationFn: (payload: Partial<Item>) => upsert({ data: payload as any }),
     onSuccess: () => { invalidate(); setEditing(null); },
   });
   const delMut = useMutation({ mutationFn: (id: string) => del({ data: { id } }), onSuccess: invalidate });
@@ -417,6 +418,62 @@ function UploadDropzone({ onUploaded }: { onUploaded: () => void }) {
   const [jobs, setJobs] = useState<UploadJob[]>([]);
 
   const upload = useCallback(async (file: File) => {
+    const jobId = Math.random().toString(36).slice(2, 10);
+    setJobs((j) => [...j, { id: jobId, name: file.name, progress: 0, status: "uploading" }]);
+    const update = (patch: Partial<UploadJob>) => setJobs((js) => js.map((j) => (j.id === jobId ? { ...j, ...patch } : j)));
+
+    try {
+      let processed: File = file;
+      let posterFile: File | null = null;
+      let kind: "image" | "video" | "pdf" | "other" = "other";
+      let width: number | null = null;
+      let height: number | null = null;
+      let duration: number | null = null;
+
+      if (file.type.startsWith("image/")) {
+        kind = "image";
+        processed = await imageCompression(file, { maxSizeMB: 2, maxWidthOrHeight: 2400, fileType: "image/webp", useWebWorker: true });
+        const dims = await getImageDims(processed);
+        width = dims.w; height = dims.h;
+      } else if (file.type.startsWith("video/")) {
+        kind = "video";
+        const meta = await getVideoMeta(file);
+        width = meta.w; height = meta.h; duration = meta.duration;
+        posterFile = meta.poster;
+      } else if (file.type === "application/pdf") {
+        kind = "pdf";
+      }
+
+      const safeName = sanitizeFilename(kind === "image" ? processed.name.replace(/\.[^.]+$/, ".webp") : file.name);
+      const signed = await sign({ data: { filename: safeName, mime: processed.type || file.type } });
+      update({ progress: 20 });
+
+      const putRes = await fetch(signed.signedUrl, { method: "PUT", body: processed, headers: { "Content-Type": processed.type || file.type } });
+      if (!putRes.ok) throw new Error(`Upload failed: ${putRes.status}`);
+      update({ progress: 60 });
+
+      let posterPath: string | null = null;
+      if (posterFile) {
+        const psafe = sanitizeFilename(`poster-${file.name.replace(/\.[^.]+$/, ".webp")}`);
+        const psigned = await sign({ data: { filename: psafe, mime: posterFile.type } });
+        const pput = await fetch(psigned.signedUrl, { method: "PUT", body: posterFile, headers: { "Content-Type": posterFile.type } });
+        if (pput.ok) posterPath = psigned.path;
+      }
+
+      update({ progress: 90 });
+      await register({
+        data: {
+          kind, name: file.name, storage_path: signed.path, poster_path: posterPath,
+          width, height, duration_seconds: duration, size_bytes: processed.size, mime: processed.type,
+        },
+      });
+      update({ progress: 100, status: "done" });
+      onUploaded();
+      setTimeout(() => setJobs((js) => js.filter((j) => j.id !== jobId)), 1500);
+    } catch (e) {
+      update({ status: "error", error: e instanceof Error ? e.message : "Failed" });
+    }
+  }, [sign, register, onUploaded]);
     const jobId = Math.random().toString(36).slice(2, 10);
     setJobs((j) => [...j, { id: jobId, name: file.name, progress: 0, status: "uploading" }]);
     const update = (patch: Partial<UploadJob>) => setJobs((js) => js.map((j) => (j.id === jobId ? { ...j, ...patch } : j)));
