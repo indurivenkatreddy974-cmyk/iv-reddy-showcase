@@ -51,7 +51,7 @@ export const listShowcase = createServerFn({ method: "GET" }).handler(async () =
 export const listMedia = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    await assertAdmin(context.supabase, context.userId);
+    await assertAdmin(context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data, error } = await supabaseAdmin.from("media_assets").select("*").order("created_at", { ascending: false });
     if (error) throw new Error(error.message);
@@ -62,7 +62,7 @@ export const upsertShowcaseItem = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => ShowcaseItemInput.parse(input))
   .handler(async ({ data, context }) => {
-    await assertAdmin(context.supabase, context.userId);
+    await assertAdmin(context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const payload = {
       ...data,
@@ -82,7 +82,7 @@ export const deleteShowcaseItem = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => z.object({ id: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
-    await assertAdmin(context.supabase, context.userId);
+    await assertAdmin(context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin.from("showcase_items").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
@@ -93,7 +93,7 @@ export const reorderShowcase = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => z.object({ ids: z.array(z.string().uuid()).max(500) }).parse(input))
   .handler(async ({ data, context }) => {
-    await assertAdmin(context.supabase, context.userId);
+    await assertAdmin(context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     await Promise.all(
       data.ids.map((id, idx) => supabaseAdmin.from("showcase_items").update({ sort_order: idx }).eq("id", id)),
@@ -111,7 +111,7 @@ export const updateSettings = createServerFn({ method: "POST" })
     }).parse(input),
   )
   .handler(async ({ data, context }) => {
-    await assertAdmin(context.supabase, context.userId);
+    await assertAdmin(context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin.from("showcase_settings").update(data).eq("id", 1);
     if (error) throw new Error(error.message);
@@ -127,7 +127,7 @@ export const signMediaUpload = createServerFn({ method: "POST" })
     }).parse(input),
   )
   .handler(async ({ data, context }) => {
-    await assertAdmin(context.supabase, context.userId);
+    await assertAdmin(context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const path = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${data.filename}`;
     const { data: signed, error } = await supabaseAdmin.storage.from("showcase-media").createSignedUploadUrl(path);
@@ -151,7 +151,7 @@ export const registerMediaAsset = createServerFn({ method: "POST" })
     }).parse(input),
   )
   .handler(async ({ data, context }) => {
-    await assertAdmin(context.supabase, context.userId);
+    await assertAdmin(context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const original_url = `/api/public/m/${data.storage_path}`;
     const poster_url = data.poster_path ? `/api/public/m/${data.poster_path}` : null;
@@ -175,7 +175,7 @@ export const deleteMediaAsset = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => z.object({ id: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
-    await assertAdmin(context.supabase, context.userId);
+    await assertAdmin(context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: row } = await supabaseAdmin.from("media_assets").select("storage_path").eq("id", data.id).maybeSingle();
     if (row?.storage_path) {
