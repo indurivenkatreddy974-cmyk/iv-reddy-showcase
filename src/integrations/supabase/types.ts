@@ -14,16 +14,179 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      media_assets: {
+        Row: {
+          created_at: string
+          duration_seconds: number | null
+          height: number | null
+          id: string
+          kind: Database["public"]["Enums"]["media_kind"]
+          mime: string | null
+          name: string
+          original_url: string
+          poster_url: string | null
+          size_bytes: number | null
+          storage_path: string
+          webp_url: string | null
+          width: number | null
+        }
+        Insert: {
+          created_at?: string
+          duration_seconds?: number | null
+          height?: number | null
+          id?: string
+          kind: Database["public"]["Enums"]["media_kind"]
+          mime?: string | null
+          name: string
+          original_url: string
+          poster_url?: string | null
+          size_bytes?: number | null
+          storage_path: string
+          webp_url?: string | null
+          width?: number | null
+        }
+        Update: {
+          created_at?: string
+          duration_seconds?: number | null
+          height?: number | null
+          id?: string
+          kind?: Database["public"]["Enums"]["media_kind"]
+          mime?: string | null
+          name?: string
+          original_url?: string
+          poster_url?: string | null
+          size_bytes?: number | null
+          storage_path?: string
+          webp_url?: string | null
+          width?: number | null
+        }
+        Relationships: []
+      }
+      showcase_items: {
+        Row: {
+          created_at: string
+          description: string | null
+          featured: boolean
+          github_url: string | null
+          id: string
+          issue_date: string | null
+          issuer: string | null
+          kind: Database["public"]["Enums"]["showcase_kind"]
+          live_url: string | null
+          media_url: string | null
+          poster_url: string | null
+          sort_order: number
+          tech: string[]
+          thumbnail_url: string | null
+          title: string
+          updated_at: string
+          verify_url: string | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          featured?: boolean
+          github_url?: string | null
+          id?: string
+          issue_date?: string | null
+          issuer?: string | null
+          kind: Database["public"]["Enums"]["showcase_kind"]
+          live_url?: string | null
+          media_url?: string | null
+          poster_url?: string | null
+          sort_order?: number
+          tech?: string[]
+          thumbnail_url?: string | null
+          title: string
+          updated_at?: string
+          verify_url?: string | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          featured?: boolean
+          github_url?: string | null
+          id?: string
+          issue_date?: string | null
+          issuer?: string | null
+          kind?: Database["public"]["Enums"]["showcase_kind"]
+          live_url?: string | null
+          media_url?: string | null
+          poster_url?: string | null
+          sort_order?: number
+          tech?: string[]
+          thumbnail_url?: string | null
+          title?: string
+          updated_at?: string
+          verify_url?: string | null
+        }
+        Relationships: []
+      }
+      showcase_settings: {
+        Row: {
+          featured_certs_first: boolean
+          featured_projects_first: boolean
+          id: number
+          layout: Database["public"]["Enums"]["showcase_layout"]
+          updated_at: string
+        }
+        Insert: {
+          featured_certs_first?: boolean
+          featured_projects_first?: boolean
+          id?: number
+          layout?: Database["public"]["Enums"]["showcase_layout"]
+          updated_at?: string
+        }
+        Update: {
+          featured_certs_first?: boolean
+          featured_projects_first?: boolean
+          id?: number
+          layout?: Database["public"]["Enums"]["showcase_layout"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      admin_exists: { Args: never; Returns: boolean }
+      claim_first_admin: { Args: never; Returns: boolean }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "user"
+      media_kind: "image" | "video" | "pdf" | "other"
+      showcase_kind: "project" | "certification" | "achievement" | "video"
+      showcase_layout: "grid" | "carousel" | "masonry" | "featured"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +313,11 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "user"],
+      media_kind: ["image", "video", "pdf", "other"],
+      showcase_kind: ["project", "certification", "achievement", "video"],
+      showcase_layout: ["grid", "carousel", "masonry", "featured"],
+    },
   },
 } as const
