@@ -38,7 +38,7 @@ export function AdminShell() {
   const [tab, setTab] = useState<TabKey>("hero");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const navigate = useNavigate();
-  const lock = useAdminAuth((s) => s.lock);
+  const lock = useAdminAuth((s) => s.signOut);
   const reset = useContent((s) => s.reset);
 
   return (

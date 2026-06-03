@@ -24,8 +24,14 @@ const ShowcaseItemInput = z.object({
   sort_order: z.number().int().default(0),
 });
 
-async function assertAdmin(supabase: { rpc: (n: string, p: object) => Promise<{ data: unknown; error: { message: string } | null }> }, userId: string) {
-  const { data, error } = await supabase.rpc("has_role", { _user_id: userId, _role: "admin" });
+async function assertAdmin(userId: string) {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data, error } = await supabaseAdmin
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", userId)
+    .eq("role", "admin")
+    .maybeSingle();
   if (error) throw new Error(error.message);
   if (!data) throw new Error("Forbidden: admin role required");
 }
