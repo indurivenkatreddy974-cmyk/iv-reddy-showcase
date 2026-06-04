@@ -521,6 +521,7 @@ function ContactEditor() {
   const patch = useContent((s) => s.patch);
   return (
     <Card title="Contact Section">
+      <SaveBadge section="contact" />
       <Field label="Heading" value={contact.heading} onChange={(v) => patch("contact", { heading: v })} />
       <Field label="Subtitle" value={contact.subtitle} onChange={(v) => patch("contact", { subtitle: v })} multiline />
       <Field label="Email" value={contact.email} onChange={(v) => patch("contact", { email: v })} />
