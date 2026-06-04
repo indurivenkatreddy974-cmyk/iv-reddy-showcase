@@ -92,8 +92,7 @@ export function bootstrapCloudContent() {
 
   useContent.subscribe((state, prev) => {
     if (hydrating) return;
-    const { isAdmin } = require("@/lib/admin-auth").useAdminAuth.getState() as { isAdmin: boolean };
-    if (!isAdmin) return;
+    if (!useAdminAuth.getState().isAdmin) return;
     for (const k of KEYS) {
       if (state[k] !== prev[k]) {
         const ser = JSON.stringify(state[k]);
