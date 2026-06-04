@@ -9,6 +9,8 @@ import {
 import { ShowcaseManager } from "./ShowcaseManager";
 import { useContent, newId, type Project, type Internship, type Education, type TimelineItem } from "@/lib/content-store";
 import { useAdminAuth, getAccessLog, type AccessLogEntry } from "@/lib/admin-auth";
+import { useCloudStatus, type SaveStatus } from "@/lib/cloud-content";
+import { Check, Cloud, CloudOff, Loader2 } from "lucide-react";
 import {
   DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors,
   type DragEndEvent,
