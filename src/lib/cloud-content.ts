@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { supabase } from "@/integrations/supabase/client";
 import { useContent, type ContentState } from "@/lib/content-store";
+import { useAdminAuth } from "@/lib/admin-auth";
 
 export type SaveStatus = "idle" | "dirty" | "saving" | "saved" | "error";
 type SyncedKey = "hero" | "about" | "contact";
