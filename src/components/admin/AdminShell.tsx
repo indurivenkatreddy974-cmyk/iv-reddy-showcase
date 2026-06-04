@@ -9,6 +9,8 @@ import {
 import { ShowcaseManager } from "./ShowcaseManager";
 import { useContent, newId, type Project, type Internship, type Education, type TimelineItem } from "@/lib/content-store";
 import { useAdminAuth, getAccessLog, type AccessLogEntry } from "@/lib/admin-auth";
+import { useCloudStatus, type SaveStatus } from "@/lib/cloud-content";
+import { Check, Cloud, CloudOff, Loader2 } from "lucide-react";
 import {
   DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors,
   type DragEndEvent,
@@ -204,11 +206,32 @@ function Field({
 
 /* ===================== Editors ===================== */
 
+function SaveBadge({ section }: { section: "hero" | "about" | "contact" }) {
+  const status = useCloudStatus((s) => s.status[section]);
+  const err = useCloudStatus((s) => s.lastError[section]);
+  const hydrated = useCloudStatus((s) => s.hydrated);
+  const map: Record<SaveStatus, { label: string; icon: React.ReactNode; color: string }> = {
+    idle: { label: hydrated ? "Synced" : "Loading…", icon: <Cloud className="w-3 h-3" />, color: "rgba(215,226,234,0.5)" },
+    dirty: { label: "Unsaved changes", icon: <Cloud className="w-3 h-3" />, color: "#f59e0b" },
+    saving: { label: "Saving…", icon: <Loader2 className="w-3 h-3 animate-spin" />, color: "#4a9eff" },
+    saved: { label: "Saved", icon: <Check className="w-3 h-3" />, color: "#34d399" },
+    error: { label: err ? `Error: ${err}` : "Save failed", icon: <CloudOff className="w-3 h-3" />, color: "#f87171" },
+  };
+  const cur = map[status];
+  return (
+    <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.25em] mb-3" style={{ color: cur.color }}>
+      {cur.icon}
+      <span>{cur.label}</span>
+    </div>
+  );
+}
+
 function HeroEditor() {
   const hero = useContent((s) => s.hero);
   const patch = useContent((s) => s.patch);
   return (
     <Card title="Hero Section">
+      <SaveBadge section="hero" />
       <Field label="Role Label" value={hero.roleLabel} onChange={(v) => patch("hero", { roleLabel: v })} />
       <Field label="Name" value={hero.name} onChange={(v) => patch("hero", { name: v })} />
       <Field label="Heading" value={hero.heading} onChange={(v) => patch("hero", { heading: v })} />
@@ -231,6 +254,7 @@ function AboutEditor() {
   const patch = useContent((s) => s.patch);
   return (
     <Card title="About Section">
+      <SaveBadge section="about" />
       <Field label="Heading" value={about.heading} onChange={(v) => patch("about", { heading: v })} />
       <Field label="Body" value={about.body} onChange={(v) => patch("about", { body: v })} multiline />
     </Card>
@@ -497,6 +521,7 @@ function ContactEditor() {
   const patch = useContent((s) => s.patch);
   return (
     <Card title="Contact Section">
+      <SaveBadge section="contact" />
       <Field label="Heading" value={contact.heading} onChange={(v) => patch("contact", { heading: v })} />
       <Field label="Subtitle" value={contact.subtitle} onChange={(v) => patch("contact", { subtitle: v })} multiline />
       <Field label="Email" value={contact.email} onChange={(v) => patch("contact", { email: v })} />
