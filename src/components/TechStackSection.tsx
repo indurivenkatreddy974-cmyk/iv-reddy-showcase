@@ -5,7 +5,7 @@ import { useContent } from "@/lib/content-store";
 export function TechStackSection() {
   const stack = useContent((s) => s.techStack);
   return (
-    <section id="stack" className="px-5 sm:px-8 md:px-10 py-24 sm:py-32" style={{ background: "#0C0C0C" }}>
+    <section id="tech" className="px-5 sm:px-8 md:px-10 py-24 sm:py-32" style={{ background: "#0C0C0C" }}>
       <FadeIn delay={0} y={40} className="text-center mb-16 md:mb-20">
         <h2
           className="hero-heading font-black uppercase leading-none tracking-tight"
