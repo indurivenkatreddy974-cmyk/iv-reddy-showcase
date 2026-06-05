@@ -1,10 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { Lock, LogIn } from "lucide-react";
 import { AdminShell } from "@/components/admin/AdminShell";
-import { useAdminAuth } from "@/lib/admin-auth";
-import { supabase } from "@/integrations/supabase/client";
+import { unlockAdminPortal, useAdminAuth } from "@/lib/admin-auth";
 
 export const Route = createFileRoute("/atelier")({
   ssr: false,
@@ -17,11 +16,7 @@ export const Route = createFileRoute("/atelier")({
   component: AtelierPage,
 });
 
-// Fixed credentials — only this name + password unlocks the portal.
-const REQUIRED_NAME = "Reddy";
 const REQUIRED_PASSWORD = "Venkatreddy60@";
-// Backend-mapped Supabase identity (hidden from the user).
-const BACKEND_EMAIL = "reddy.admin@portfolio.local";
 
 function AtelierPage() {
   const { authed, isAdmin, loading } = useAdminAuth();
@@ -39,52 +34,38 @@ function AtelierPage() {
 }
 
 function AuthGate() {
-  const [name, setName] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const signIn = useAdminAuth((s) => s.signIn);
-  const signUp = useAdminAuth((s) => s.signUp);
-  const claimAdmin = useAdminAuth((s) => s.claimAdmin);
-  const refresh = useAdminAuth((s) => s.refresh);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, []);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
-    if (name.trim() !== REQUIRED_NAME || password !== REQUIRED_PASSWORD) {
-      setError("Invalid credentials");
+    if (password !== REQUIRED_PASSWORD) {
+      setError("Incorrect password");
+      inputRef.current?.focus();
+      inputRef.current?.select();
       return;
     }
 
     setBusy(true);
     try {
-      // Try to sign in to the backend identity. If it doesn't exist yet, create it.
-      let res = await signIn(BACKEND_EMAIL, REQUIRED_PASSWORD);
-      if (res.error) {
-        const up = await signUp(BACKEND_EMAIL, REQUIRED_PASSWORD);
-        if (up.error && !/registered|already/i.test(up.error)) {
-          setError("Access denied");
-          setBusy(false);
-          return;
-        }
-        // After signup, ensure we have a session
-        res = await signIn(BACKEND_EMAIL, REQUIRED_PASSWORD);
-        if (res.error) {
-          setError("Access denied");
-          setBusy(false);
-          return;
-        }
+      const result = await unlockAdminPortal(password);
+      if (!result.ok) {
+        setError(result.error ?? "Access denied");
+        inputRef.current?.focus();
+        inputRef.current?.select();
       }
-
-      // Ensure this account holds the admin role (one-time claim if none exists).
-      const { data: adminAlready } = await supabase.rpc("admin_exists");
-      if (!adminAlready) {
-        await claimAdmin();
-      }
-      await refresh();
     } catch {
       setError("Access denied");
+      inputRef.current?.focus();
+      inputRef.current?.select();
     } finally {
       setBusy(false);
     }
@@ -113,27 +94,22 @@ function AuthGate() {
           </div>
         </div>
 
+        <p className="text-sm leading-relaxed text-[#D7E2EA]/65">
+          Enter the portal password to open the secret admin panel instantly.
+        </p>
+
         <div className="flex flex-col gap-3">
-          <label className="flex flex-col gap-1.5">
-            <span className="text-[10px] uppercase tracking-[0.3em] text-[#D7E2EA]/60">Name</span>
-            <input
-              autoFocus
-              type="text"
-              required
-              autoComplete="off"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="bg-transparent text-[#D7E2EA] placeholder:text-[#D7E2EA]/30 px-4 py-3 rounded-xl focus:outline-none border"
-              style={{ borderColor: "rgba(215,226,234,0.18)" }}
-            />
-          </label>
           <label className="flex flex-col gap-1.5">
             <span className="text-[10px] uppercase tracking-[0.3em] text-[#D7E2EA]/60">Password</span>
             <input
+              ref={inputRef}
               type="password"
               required
+              autoFocus
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              autoComplete="current-password"
+              placeholder="Enter password"
               className="bg-transparent text-[#D7E2EA] placeholder:text-[#D7E2EA]/30 px-4 py-3 rounded-xl focus:outline-none border"
               style={{ borderColor: "rgba(215,226,234,0.18)" }}
             />
