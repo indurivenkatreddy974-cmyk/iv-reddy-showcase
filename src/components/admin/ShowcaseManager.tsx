@@ -60,6 +60,25 @@ const KIND_LABEL: Record<Kind, string> = {
   video: "Video",
 };
 
+const KIND_HELP: Record<Kind, { title: string; description: string }> = {
+  project: {
+    title: "Projects section",
+    description: "Use an image cover, optional live/code links, and tech tags for portfolio projects.",
+  },
+  video: {
+    title: "Featured work video",
+    description: "Use a video file with optional poster image so admins can manage motion content clearly.",
+  },
+  certification: {
+    title: "Certificates",
+    description: "Store issuer, date, and verification link for proof-based work.",
+  },
+  achievement: {
+    title: "Achievements",
+    description: "Highlight recognitions or outcomes with a strong cover image and short description.",
+  },
+};
+
 export function ShowcaseManager() {
   const [sub, setSub] = useState<"items" | "media" | "settings">("items");
 
@@ -237,6 +256,7 @@ function ItemEditor({ item, onClose, onSave, saving }: { item: Item; onClose: ()
     e.preventDefault();
     onSave({ ...local, id: local.id || undefined as unknown as string });
   };
+  const help = KIND_HELP[local.kind];
 
   return (
     <motion.div className="fixed inset-0 z-[150] flex items-center justify-center p-4" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
@@ -257,14 +277,35 @@ function ItemEditor({ item, onClose, onSave, saving }: { item: Item; onClose: ()
           <button type="button" onClick={onClose} className="w-9 h-9 rounded-full flex items-center justify-center text-[#D7E2EA]/60 hover:text-[#D7E2EA] hover:bg-[#D7E2EA]/5"><X className="w-4 h-4" /></button>
         </div>
 
-        <EditorField label="Title" value={local.title} onChange={(v) => set("title", v)} />
+        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_280px] gap-4 items-start">
+          <div className="rounded-2xl p-4" style={{ background: "rgba(215,226,234,0.04)", border: "1px solid rgba(215,226,234,0.08)" }}>
+            <div className="text-[10px] uppercase tracking-[0.3em] text-[#4a9eff] mb-2">Editing target</div>
+            <div className="text-sm font-medium text-[#D7E2EA]">{help.title}</div>
+            <p className="text-sm leading-relaxed text-[#D7E2EA]/65 mt-2">{help.description}</p>
+          </div>
+          <div className="rounded-2xl p-4" style={{ background: "rgba(215,226,234,0.04)", border: "1px solid rgba(215,226,234,0.08)" }}>
+            <div className="text-[10px] uppercase tracking-[0.3em] text-[#4a9eff] mb-2">Quick setup</div>
+            <ul className="text-sm leading-6 text-[#D7E2EA]/65 space-y-1">
+              <li>• Pick cover image from the media library.</li>
+              {local.kind === "video" ? <li>• Add one video file and optional poster.</li> : <li>• Add title, description, and important links.</li>}
+              <li>• Mark as featured to push it higher in featured work.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <EditorField label="Title" value={local.title} onChange={(v) => set("title", v)} />
+          <MediaPickerField label={local.kind === "video" ? "Cover / Poster image" : "Thumbnail / Cover image"} value={local.thumbnail_url ?? ""} onChange={(v) => set("thumbnail_url", v)} kindFilter="image" />
+        </div>
+
         <EditorField label="Description" value={local.description ?? ""} onChange={(v) => set("description", v)} multiline />
-        <MediaPickerField label="Thumbnail / Image" value={local.thumbnail_url ?? ""} onChange={(v) => set("thumbnail_url", v)} kindFilter="image" />
 
         {local.kind === "project" && (
           <>
-            <EditorField label="Live URL" value={local.live_url ?? ""} onChange={(v) => set("live_url", v)} />
-            <EditorField label="GitHub URL" value={local.github_url ?? ""} onChange={(v) => set("github_url", v)} />
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <EditorField label="Live URL" value={local.live_url ?? ""} onChange={(v) => set("live_url", v)} />
+              <EditorField label="GitHub URL" value={local.github_url ?? ""} onChange={(v) => set("github_url", v)} />
+            </div>
             <EditorField label="Tech (comma-separated)" value={local.tech.join(", ")} onChange={(v) => set("tech", v.split(",").map((s) => s.trim()).filter(Boolean))} />
           </>
         )}
@@ -316,10 +357,16 @@ function MediaPickerField({ label, value, onChange, kindFilter }: { label: strin
   return (
     <div className="flex flex-col gap-1.5">
       <span className="text-[10px] uppercase tracking-[0.3em] text-[#D7E2EA]/60">{label}</span>
-      <div className="flex gap-2 items-center">
-        {value && kindFilter === "image" && <img src={value} alt="" className="w-14 h-14 rounded-xl object-cover" />}
-        <input value={value} onChange={(e) => onChange(e.target.value)} placeholder="https://… or pick from library" className="flex-1 bg-transparent text-sm text-[#D7E2EA] placeholder:text-[#D7E2EA]/30 px-4 py-3 rounded-xl focus:outline-none border" style={{ borderColor: "rgba(215,226,234,0.15)" }} />
-        <button type="button" onClick={() => setPicking(true)} className="text-xs uppercase tracking-widest text-[#D7E2EA]/80 px-4 py-3 rounded-xl border border-[#D7E2EA]/15 hover:border-[#4a9eff]/50">Pick</button>
+      <div className="rounded-2xl p-3 md:p-4 flex flex-col gap-3" style={{ background: "rgba(215,226,234,0.03)", border: "1px solid rgba(215,226,234,0.08)" }}>
+        <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
+          {value && kindFilter === "image" && <img src={value} alt="" className="w-full sm:w-20 h-20 rounded-xl object-cover shrink-0" />}
+          {value && kindFilter === "video" && <div className="w-full sm:w-20 h-20 rounded-xl flex items-center justify-center shrink-0" style={{ background: "rgba(215,226,234,0.05)" }}><VideoIcon className="w-6 h-6 text-[#D7E2EA]/50" /></div>}
+          <input value={value} onChange={(e) => onChange(e.target.value)} placeholder="https://… or pick from library" className="flex-1 bg-transparent text-sm text-[#D7E2EA] placeholder:text-[#D7E2EA]/30 px-4 py-3 rounded-xl focus:outline-none border" style={{ borderColor: "rgba(215,226,234,0.15)" }} />
+          <button type="button" onClick={() => setPicking(true)} className="text-xs uppercase tracking-widest text-[#D7E2EA]/80 px-4 py-3 rounded-xl border border-[#D7E2EA]/15 hover:border-[#4a9eff]/50 whitespace-nowrap">Pick</button>
+        </div>
+        <div className="text-xs text-[#D7E2EA]/45">
+          {kindFilter === "image" ? "Best for covers, project thumbnails, posters, and featured previews." : "Best for project demos, featured reels, or showcase walkthrough videos."}
+        </div>
       </div>
       <AnimatePresence>
         {picking && <MediaPickerModal kindFilter={kindFilter} onClose={() => setPicking(false)} onPick={(url) => { onChange(url); setPicking(false); }} />}
