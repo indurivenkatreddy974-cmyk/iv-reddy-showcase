@@ -42,7 +42,7 @@ export function SecretModal({ open, onClose }: { open: boolean; onClose: () => v
               </div>
             </div>
             <p className="text-sm text-[#D7E2EA]/70 leading-relaxed">
-              You've unlocked the gateway. Continue to the Atelier and sign in with your admin credentials to manage your portfolio.
+              You've unlocked the gateway. Continue to the Atelier and enter only the portal password to manage your portfolio.
             </p>
             <div className="flex items-center justify-end gap-3">
               <button onClick={onClose} className="text-xs uppercase tracking-widest text-[#D7E2EA]/60 hover:text-[#D7E2EA] px-4 py-2">
