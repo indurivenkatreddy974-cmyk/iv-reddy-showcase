@@ -20,14 +20,23 @@ function ProjectCard({
 }) {
   const targetScale = 1 - (total - 1 - index) * 0.03;
   const scale = useTransform(scrollYProgress, range, [1, targetScale]);
+  const hasVideo = Boolean(project.videoUrl);
 
   return (
-    <div className="h-[85vh] sticky top-24 md:top-32 flex items-start justify-center" style={{ top: `${100 + index * 28}px` }}>
+    <div
+      className="h-[85vh] sticky top-24 md:top-32 flex items-start justify-center"
+      style={{ top: `${100 + index * 28}px` }}
+    >
       <motion.div
         style={{ scale }}
         className="w-full rounded-[40px] sm:rounded-[50px] md:rounded-[60px] p-4 sm:p-6 md:p-8"
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        {...({ initial: { opacity: 0, y: 60 }, whileInView: { opacity: 1, y: 0 }, viewport: { once: true, margin: "100px" }, transition: { duration: 0.8, ease: [0.25, 0.1, 0.25, 1] } } as any)}
+        {...({
+          initial: { opacity: 0, y: 60 },
+          whileInView: { opacity: 1, y: 0 },
+          viewport: { once: true, margin: "100px" },
+          transition: { duration: 0.8, ease: [0.25, 0.1, 0.25, 1] },
+        } as any)}
       >
         <div
           className="rounded-[40px] sm:rounded-[50px] md:rounded-[60px] p-4 sm:p-6 md:p-8 border-2"
@@ -42,7 +51,10 @@ function ProjectCard({
                 {project.n}
               </div>
               <div className="flex flex-col gap-2 pb-2 md:pb-4">
-                <span className="text-xs sm:text-sm uppercase tracking-[0.3em]" style={{ color: "#7621B0" }}>
+                <span
+                  className="text-xs sm:text-sm uppercase tracking-[0.3em]"
+                  style={{ color: "#7621B0" }}
+                >
                   {project.type}
                 </span>
                 <h3
@@ -54,7 +66,10 @@ function ProjectCard({
                 {project.tech.length > 0 && (
                   <div className="flex flex-wrap gap-2 mt-2">
                     {project.tech.map((t) => (
-                      <span key={t} className="text-[10px] uppercase tracking-widest px-2 py-1 rounded-full border border-[#D7E2EA]/20 text-[#D7E2EA]/70">
+                      <span
+                        key={t}
+                        className="text-[10px] uppercase tracking-widest px-2 py-1 rounded-full border border-[#D7E2EA]/20 text-[#D7E2EA]/70"
+                      >
                         {t}
                       </span>
                     ))}
@@ -63,9 +78,13 @@ function ProjectCard({
               </div>
             </div>
             {project.liveUrl ? (
-              <CtaButton href={project.liveUrl} variant="ghost" size="sm">Live Project</CtaButton>
+              <CtaButton href={project.liveUrl} variant="ghost" size="sm">
+                Live Project
+              </CtaButton>
             ) : (
-              <CtaButton variant="ghost" size="sm">Live Project</CtaButton>
+              <CtaButton variant="ghost" size="sm">
+                Live Project
+              </CtaButton>
             )}
           </div>
 
@@ -78,11 +97,41 @@ function ProjectCard({
 
           <div className="grid grid-cols-1 sm:grid-cols-5 gap-3 sm:gap-4 md:gap-5">
             <div className="sm:col-span-2 flex flex-col gap-3 sm:gap-4 md:gap-5">
-              <img src={project.imgs[0]} alt="" className="w-full rounded-[40px] sm:rounded-[50px] md:rounded-[60px] object-cover" style={{ height: "clamp(130px, 16vw, 230px)" }} loading="lazy" />
-              <img src={project.imgs[1]} alt="" className="w-full rounded-[40px] sm:rounded-[50px] md:rounded-[60px] object-cover" style={{ height: "clamp(160px, 22vw, 340px)" }} loading="lazy" />
+              <img
+                src={project.imgs[0]}
+                alt=""
+                className="w-full rounded-[40px] sm:rounded-[50px] md:rounded-[60px] object-cover"
+                style={{ height: "clamp(130px, 16vw, 230px)" }}
+                loading="lazy"
+              />
+              {hasVideo ? (
+                <video
+                  src={project.videoUrl}
+                  poster={project.posterUrl || project.imgs[1]}
+                  className="w-full rounded-[40px] sm:rounded-[50px] md:rounded-[60px] object-cover"
+                  style={{ height: "clamp(160px, 22vw, 340px)" }}
+                  controls
+                  playsInline
+                  preload="metadata"
+                />
+              ) : (
+                <img
+                  src={project.imgs[1]}
+                  alt=""
+                  className="w-full rounded-[40px] sm:rounded-[50px] md:rounded-[60px] object-cover"
+                  style={{ height: "clamp(160px, 22vw, 340px)" }}
+                  loading="lazy"
+                />
+              )}
             </div>
             <div className="sm:col-span-3">
-              <img src={project.imgs[2]} alt="" className="w-full h-full rounded-[40px] sm:rounded-[50px] md:rounded-[60px] object-cover" style={{ minHeight: "clamp(310px, 40vw, 590px)" }} loading="lazy" />
+              <img
+                src={project.imgs[2]}
+                alt=""
+                className="w-full h-full rounded-[40px] sm:rounded-[50px] md:rounded-[60px] object-cover"
+                style={{ minHeight: "clamp(310px, 40vw, 590px)" }}
+                loading="lazy"
+              />
             </div>
           </div>
         </div>
