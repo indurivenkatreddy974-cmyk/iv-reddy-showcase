@@ -20,6 +20,7 @@ function ProjectCard({
 }) {
   const targetScale = 1 - (total - 1 - index) * 0.03;
   const scale = useTransform(scrollYProgress, range, [1, targetScale]);
+  const hasVideo = Boolean(project.videoUrl);
 
   return (
     <div className="h-[85vh] sticky top-24 md:top-32 flex items-start justify-center" style={{ top: `${100 + index * 28}px` }}>
@@ -79,7 +80,19 @@ function ProjectCard({
           <div className="grid grid-cols-1 sm:grid-cols-5 gap-3 sm:gap-4 md:gap-5">
             <div className="sm:col-span-2 flex flex-col gap-3 sm:gap-4 md:gap-5">
               <img src={project.imgs[0]} alt="" className="w-full rounded-[40px] sm:rounded-[50px] md:rounded-[60px] object-cover" style={{ height: "clamp(130px, 16vw, 230px)" }} loading="lazy" />
-              <img src={project.imgs[1]} alt="" className="w-full rounded-[40px] sm:rounded-[50px] md:rounded-[60px] object-cover" style={{ height: "clamp(160px, 22vw, 340px)" }} loading="lazy" />
+              {hasVideo ? (
+                <video
+                  src={project.videoUrl}
+                  poster={project.posterUrl || project.imgs[1]}
+                  className="w-full rounded-[40px] sm:rounded-[50px] md:rounded-[60px] object-cover"
+                  style={{ height: "clamp(160px, 22vw, 340px)" }}
+                  controls
+                  playsInline
+                  preload="metadata"
+                />
+              ) : (
+                <img src={project.imgs[1]} alt="" className="w-full rounded-[40px] sm:rounded-[50px] md:rounded-[60px] object-cover" style={{ height: "clamp(160px, 22vw, 340px)" }} loading="lazy" />
+              )}
             </div>
             <div className="sm:col-span-3">
               <img src={project.imgs[2]} alt="" className="w-full h-full rounded-[40px] sm:rounded-[50px] md:rounded-[60px] object-cover" style={{ minHeight: "clamp(310px, 40vw, 590px)" }} loading="lazy" />
