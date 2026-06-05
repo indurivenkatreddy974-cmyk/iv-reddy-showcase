@@ -1,0 +1,14 @@
+GRANT SELECT ON public.user_roles TO authenticated;
+GRANT ALL ON public.user_roles TO service_role;
+GRANT SELECT, INSERT, UPDATE ON public.site_content TO authenticated;
+GRANT SELECT ON public.site_content TO anon;
+GRANT ALL ON public.site_content TO service_role;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.showcase_items TO authenticated;
+GRANT SELECT ON public.showcase_items TO anon;
+GRANT ALL ON public.showcase_items TO service_role;
+GRANT SELECT, INSERT, UPDATE ON public.showcase_settings TO authenticated;
+GRANT SELECT ON public.showcase_settings TO anon;
+GRANT ALL ON public.showcase_settings TO service_role;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.media_assets TO authenticated;
+GRANT SELECT ON public.media_assets TO anon;
+GRANT ALL ON public.media_assets TO service_role;
