@@ -300,7 +300,7 @@ function ProjectsEditor() {
   const add = () => setKey("projects", [...projects, {
     id: newId(), n: String(projects.length + 1).padStart(2, "0"),
     type: "Personal", name: "New Project", desc: "", liveUrl: "", githubUrl: "",
-    tech: [], imgs: ["", "", ""],
+    tech: [], imgs: ["", "", ""], videoUrl: "", posterUrl: "",
   }]);
 
   return (
@@ -344,6 +344,16 @@ function ProjectsEditor() {
                       value={p.tech.join(", ")}
                       onChange={(v) => update(p.id, { tech: v.split(",").map((s) => s.trim()).filter(Boolean) })}
                     />
+                    <div className="rounded-2xl p-4 flex flex-col gap-3" style={{ background: "rgba(215,226,234,0.03)", border: "1px solid rgba(215,226,234,0.08)" }}>
+                      <div>
+                        <div className="text-[10px] uppercase tracking-[0.3em] text-[#4a9eff] mb-2">Project media</div>
+                        <p className="text-sm text-[#D7E2EA]/60 leading-relaxed">Keep three images for the gallery, and add an optional demo video with poster if you want motion inside the project card.</p>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <Field label="Project Video URL (optional)" value={p.videoUrl ?? ""} onChange={(v) => update(p.id, { videoUrl: v })} />
+                        <Field label="Video Poster URL (optional)" value={p.posterUrl ?? ""} onChange={(v) => update(p.id, { posterUrl: v })} />
+                      </div>
+                    </div>
                     {([0, 1, 2] as const).map((i) => (
                       <Field key={i} label={`Image ${i + 1} URL`} value={p.imgs[i]} onChange={(v) => {
                         const next: [string, string, string] = [...p.imgs] as [string, string, string];
