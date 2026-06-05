@@ -69,17 +69,33 @@ export function ChatOrb() {
             {/* breathing halo */}
             <motion.span
               className="absolute inset-0 rounded-full pointer-events-none"
-              style={{ background: "radial-gradient(circle, rgba(74,158,255,0.35), transparent 60%)" }}
+              style={{
+                background: "radial-gradient(circle, rgba(74,158,255,0.35), transparent 60%)",
+              }}
               animate={{ opacity: [0.4, 0.8, 0.4], scale: [1, 1.4, 1] }}
               transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}
             />
             <AnimatePresence mode="wait" initial={false}>
               {open ? (
-                <motion.span key="x" initial={{ rotate: -90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: 90, opacity: 0 }} transition={{ duration: 0.2 }} className="relative z-10">
+                <motion.span
+                  key="x"
+                  initial={{ rotate: -90, opacity: 0 }}
+                  animate={{ rotate: 0, opacity: 1 }}
+                  exit={{ rotate: 90, opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="relative z-10"
+                >
                   <X className="w-5 h-5 md:w-6 md:h-6 text-[#D7E2EA]" />
                 </motion.span>
               ) : (
-                <motion.span key="m" initial={{ rotate: -90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: 90, opacity: 0 }} transition={{ duration: 0.2 }} className="relative z-10">
+                <motion.span
+                  key="m"
+                  initial={{ rotate: -90, opacity: 0 }}
+                  animate={{ rotate: 0, opacity: 1 }}
+                  exit={{ rotate: 90, opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="relative z-10"
+                >
                   <MessageCircle className="w-5 h-5 md:w-6 md:h-6 text-[#D7E2EA]" />
                 </motion.span>
               )}

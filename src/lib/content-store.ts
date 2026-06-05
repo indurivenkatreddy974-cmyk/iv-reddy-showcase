@@ -181,14 +181,49 @@ const DEFAULTS: ContentState = {
     },
   ],
   timeline: [
-    { id: uid(), title: "Foundation", desc: "First steps into code, design, and digital craft — building intuition for the web." },
-    { id: uid(), title: "Learning", desc: "Diving deep into modern stacks, frameworks, patterns, and the engineering mindset." },
-    { id: uid(), title: "Building", desc: "Shipping projects with purpose — translating ideas into real, working products." },
-    { id: uid(), title: "Experimenting", desc: "Exploring motion, 3D, performance, and creative interactions at the edge of the web." },
-    { id: uid(), title: "Creating", desc: "Crafting cinematic, scalable, and meaningful digital experiences with intention." },
-    { id: uid(), title: "Future Vision", desc: "Pushing toward immersive, AI-augmented, story-driven product experiences." },
+    {
+      id: uid(),
+      title: "Foundation",
+      desc: "First steps into code, design, and digital craft — building intuition for the web.",
+    },
+    {
+      id: uid(),
+      title: "Learning",
+      desc: "Diving deep into modern stacks, frameworks, patterns, and the engineering mindset.",
+    },
+    {
+      id: uid(),
+      title: "Building",
+      desc: "Shipping projects with purpose — translating ideas into real, working products.",
+    },
+    {
+      id: uid(),
+      title: "Experimenting",
+      desc: "Exploring motion, 3D, performance, and creative interactions at the edge of the web.",
+    },
+    {
+      id: uid(),
+      title: "Creating",
+      desc: "Crafting cinematic, scalable, and meaningful digital experiences with intention.",
+    },
+    {
+      id: uid(),
+      title: "Future Vision",
+      desc: "Pushing toward immersive, AI-augmented, story-driven product experiences.",
+    },
   ],
-  techStack: ["HTML", "CSS", "JavaScript", "TypeScript", "React", "Tailwind CSS", "Node.js", "Git", "GitHub", "Framer Motion"],
+  techStack: [
+    "HTML",
+    "CSS",
+    "JavaScript",
+    "TypeScript",
+    "React",
+    "Tailwind CSS",
+    "Node.js",
+    "Git",
+    "GitHub",
+    "Framer Motion",
+  ],
   contact: {
     heading: "Let's Build Something Meaningful",
     subtitle:
@@ -209,7 +244,10 @@ export const useContent = create<ContentState & ContentActions>()(
       ...DEFAULTS,
       set: (key, value) => set({ [key]: value } as Partial<ContentState>),
       patch: (key, value) =>
-        set((s) => ({ [key]: { ...(s[key] as object), ...(value as object) } } as Partial<ContentState>)),
+        set(
+          (s) =>
+            ({ [key]: { ...(s[key] as object), ...(value as object) } }) as Partial<ContentState>,
+        ),
       reset: () => set({ ...DEFAULTS }),
     }),
     { name: "iv-reddy-content-v1" },

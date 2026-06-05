@@ -53,7 +53,10 @@ export const useAdminAuth = create<AuthState>((set, get) => ({
     const { error } = await supabase.auth.signUp({
       email,
       password,
-      options: { emailRedirectTo: typeof window !== "undefined" ? window.location.origin + "/atelier" : undefined },
+      options: {
+        emailRedirectTo:
+          typeof window !== "undefined" ? window.location.origin + "/atelier" : undefined,
+      },
     });
     if (error) return { error: error.message };
     await get().refresh();
@@ -72,7 +75,9 @@ export const useAdminAuth = create<AuthState>((set, get) => ({
   },
 }));
 
-export async function unlockAdminPortal(password: string): Promise<{ ok: boolean; error?: string }> {
+export async function unlockAdminPortal(
+  password: string,
+): Promise<{ ok: boolean; error?: string }> {
   if (password !== PORTAL_PASSWORD) {
     return { ok: false, error: "Incorrect password" };
   }
