@@ -18,13 +18,24 @@ type AuthState = {
 };
 
 async function loadRole(userId: string): Promise<boolean> {
-  const { data } = await supabase
-    .from("user_roles")
-    .select("role")
-    .eq("user_id", userId)
-    .eq("role", "admin")
-    .maybeSingle();
-  return !!data;
+  try {
+    const { data, error } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userId)
+      .eq("role", "admin")
+      .maybeSingle();
+
+    if (error) {
+      console.error("Failed to load admin role", error.message);
+      return false;
+    }
+
+    return !!data;
+  } catch (error) {
+    console.error("Failed to load admin role", error);
+    return false;
+  }
 }
 
 export const useAdminAuth = create<AuthState>((set, get) => ({
@@ -34,14 +45,27 @@ export const useAdminAuth = create<AuthState>((set, get) => ({
   email: null,
   loading: true,
   refresh: async () => {
-    const { data } = await supabase.auth.getUser();
-    const user = data.user;
-    if (!user) {
+    try {
+      const { data, error } = await supabase.auth.getUser();
+
+      if (error) {
+        console.error("Failed to load admin user", error.message);
+        set({ authed: false, isAdmin: false, userId: null, email: null, loading: false });
+        return;
+      }
+
+      const user = data.user;
+      if (!user) {
+        set({ authed: false, isAdmin: false, userId: null, email: null, loading: false });
+        return;
+      }
+
+      const isAdmin = await loadRole(user.id);
+      set({ authed: true, isAdmin, userId: user.id, email: user.email ?? null, loading: false });
+    } catch (error) {
+      console.error("Failed to refresh admin auth", error);
       set({ authed: false, isAdmin: false, userId: null, email: null, loading: false });
-      return;
     }
-    const isAdmin = await loadRole(user.id);
-    set({ authed: true, isAdmin, userId: user.id, email: user.email ?? null, loading: false });
   },
   signIn: async (email, password) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
