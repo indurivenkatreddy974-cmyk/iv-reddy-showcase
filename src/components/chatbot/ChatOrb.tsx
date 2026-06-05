@@ -1,15 +1,15 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useNavigate } from "@tanstack/react-router";
 import { MessageCircle, X } from "lucide-react";
 import { ChatPanel } from "./ChatPanel";
-import { SecretModal } from "./SecretModal";
 
 export function ChatOrb() {
   const [open, setOpen] = useState(false);
-  const [secretOpen, setSecretOpen] = useState(false);
   const orbRef = useRef<HTMLButtonElement>(null);
   const [magnet, setMagnet] = useState({ x: 0, y: 0 });
+  const navigate = useNavigate();
 
   useEffect(() => {
     const onMove = (e: MouseEvent) => {
@@ -91,9 +91,11 @@ export function ChatOrb() {
       <ChatPanel
         open={open}
         onClose={() => setOpen(false)}
-        onSecretTrigger={() => setSecretOpen(true)}
+        onSecretTrigger={() => {
+          setOpen(false);
+          navigate({ to: "/atelier" });
+        }}
       />
-      <SecretModal open={secretOpen} onClose={() => setSecretOpen(false)} />
     </>
   );
 }
