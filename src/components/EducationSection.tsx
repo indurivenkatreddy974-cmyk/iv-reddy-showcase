@@ -36,6 +36,25 @@ export function EducationSection() {
                 <h3 className="font-medium uppercase text-[#D7E2EA] text-2xl md:text-3xl tracking-tight">
                   {e.degree}
                 </h3>
+                {e.percentage && e.percentage.trim() && (
+                  <div className="flex items-baseline gap-3 mt-1">
+                    <span
+                      className="font-black tracking-tight"
+                      style={{
+                        fontSize: "clamp(1.75rem, 3.5vw, 2.5rem)",
+                        background: "linear-gradient(135deg, #4a9eff, #7621B0)",
+                        WebkitBackgroundClip: "text",
+                        WebkitTextFillColor: "transparent",
+                        lineHeight: 1,
+                      }}
+                    >
+                      {e.percentage}
+                    </span>
+                    <span className="text-[10px] uppercase tracking-[0.4em] text-[#D7E2EA]/50">
+                      Aggregate
+                    </span>
+                  </div>
+                )}
                 <p className="text-[#D7E2EA]/70 font-light leading-relaxed text-base md:text-lg">
                   {e.description}
                 </p>

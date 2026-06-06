@@ -4,8 +4,8 @@ import { useContent, type ContentState } from "@/lib/content-store";
 import { useAdminAuth } from "@/lib/admin-auth";
 
 export type SaveStatus = "idle" | "dirty" | "saving" | "saved" | "error";
-type SyncedKey = "hero" | "about" | "contact";
-const KEYS: SyncedKey[] = ["hero", "about", "contact"];
+type SyncedKey = "hero" | "about" | "contact" | "educations" | "internships" | "certifications" | "projects";
+const KEYS: SyncedKey[] = ["hero", "about", "contact", "educations", "internships", "certifications", "projects"];
 
 type CloudStatusState = {
   hydrated: boolean;
@@ -15,10 +15,14 @@ type CloudStatusState = {
   setHydrated: (v: boolean) => void;
 };
 
+const initial = <T,>(v: T): Record<SyncedKey, T> => ({
+  hero: v, about: v, contact: v, educations: v, internships: v, certifications: v, projects: v,
+});
+
 export const useCloudStatus = create<CloudStatusState>((set) => ({
   hydrated: false,
-  status: { hero: "idle", about: "idle", contact: "idle" },
-  lastError: { hero: null, about: null, contact: null },
+  status: initial<SaveStatus>("idle"),
+  lastError: initial<string | null>(null),
   setStatus: (k, s, err = null) =>
     set((st) => ({
       status: { ...st.status, [k]: s },
@@ -44,11 +48,15 @@ async function hydrate() {
     const store = useContent.getState();
     for (const k of KEYS) {
       const remote = map.get(k);
-      if (remote && typeof remote === "object") {
-        // Merge to avoid dropping any new local default fields
-        const merged = { ...(store[k] as object), ...(remote as object) } as ContentState[SyncedKey];
-        useContent.setState({ [k]: merged } as Partial<ContentState>);
-        lastSerialized[k] = JSON.stringify(merged);
+      if (remote !== undefined && remote !== null) {
+        if (Array.isArray(remote)) {
+          useContent.setState({ [k]: remote } as Partial<ContentState>);
+          lastSerialized[k] = JSON.stringify(remote);
+        } else if (typeof remote === "object") {
+          const merged = { ...(store[k] as object), ...(remote as object) } as ContentState[SyncedKey];
+          useContent.setState({ [k]: merged } as Partial<ContentState>);
+          lastSerialized[k] = JSON.stringify(merged);
+        }
       } else {
         lastSerialized[k] = JSON.stringify(store[k]);
       }
@@ -104,8 +112,9 @@ export function bootstrapCloudContent() {
 
 export async function flushPending() {
   await Promise.all(
-    KEYS.filter((k) => useCloudStatus.getState().status[k] === "dirty" || useCloudStatus.getState().status[k] === "saving").map(
-      (k) => saveSection(k),
-    ),
+    KEYS.filter((k) => {
+      const s = useCloudStatus.getState().status[k];
+      return s === "dirty" || s === "saving";
+    }).map((k) => saveSection(k)),
   );
 }

@@ -7,6 +7,7 @@ import { ServicesSection } from "@/components/ServicesSection";
 import { ProjectsSection } from "@/components/ProjectsSection";
 import { InternshipsSection } from "@/components/InternshipsSection";
 import { EducationSection } from "@/components/EducationSection";
+import { CertificationsSection } from "@/components/CertificationsSection";
 import { TimelineSection } from "@/components/TimelineSection";
 import { TechStackSection } from "@/components/TechStackSection";
 import { ContactSection, Footer } from "@/components/ContactSection";
@@ -48,6 +49,7 @@ function Index() {
       <ProjectsSection />
       <InternshipsSection />
       <EducationSection />
+      <CertificationsSection />
       <TimelineSection />
       <TechStackSection />
       <ContactSection />
