@@ -842,6 +842,94 @@ function EducationEditor() {
   );
 }
 
+function CertificationsEditor() {
+  const items = useContent((s) => s.certifications);
+  const setKey = useContent((s) => s.set);
+  const { sensors, onDragEnd } = useDnd(items, (next) => setKey("certifications", next));
+  const update = (id: string, patch: Partial<Certification>) =>
+    setKey(
+      "certifications",
+      items.map((p) => (p.id === id ? { ...p, ...patch } : p)),
+    );
+  const remove = (id: string) =>
+    setKey(
+      "certifications",
+      items.filter((p) => p.id !== id),
+    );
+  const add = () =>
+    setKey("certifications", [
+      ...items,
+      {
+        id: newId(),
+        name: "New Certificate",
+        issuer: "Issuing Organization",
+        issueDate: "",
+        pdfUrl: "",
+        previewUrl: "",
+        verifyUrl: "",
+      },
+    ]);
+  return (
+    <>
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <div className="text-xs uppercase tracking-[0.3em] text-[#D7E2EA]/60">Certifications</div>
+          <div className="text-[10px] text-[#D7E2EA]/40 mt-1">
+            Paste a public PDF URL or use a /api/public/m/... path uploaded via Showcase → Media Library.
+          </div>
+        </div>
+        <button
+          onClick={add}
+          className="flex items-center gap-1.5 text-xs uppercase tracking-widest px-4 py-2 rounded-full text-white"
+          style={{ background: "linear-gradient(135deg, #4a9eff, #7621B0)" }}
+        >
+          <Plus className="w-3.5 h-3.5" /> Add
+        </button>
+      </div>
+      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
+        <SortableContext items={items.map((i) => i.id)} strategy={verticalListSortingStrategy}>
+          {items.map((i) => (
+            <SortableItem key={i.id} id={i.id}>
+              {({ listeners }) => (
+                <div
+                  className="rounded-3xl p-5 md:p-6 mb-4"
+                  style={{
+                    background: "linear-gradient(160deg, rgba(20,22,38,0.7), rgba(12,12,12,0.7))",
+                    border: "1px solid rgba(215,226,234,0.1)",
+                  }}
+                >
+                  <div className="flex items-center gap-3 mb-4">
+                    <button {...listeners} className="cursor-grab text-[#D7E2EA]/40 hover:text-[#D7E2EA]">
+                      <GripVertical className="w-4 h-4" />
+                    </button>
+                    <div className="flex-1 text-xs uppercase tracking-[0.3em] text-[#D7E2EA]/60">
+                      {i.name}
+                    </div>
+                    <button onClick={() => remove(i.id)} className="text-[#D7E2EA]/40 hover:text-red-400">
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <Field label="Certificate Name" value={i.name} onChange={(v) => update(i.id, { name: v })} />
+                    <Field label="Issuing Organization" value={i.issuer} onChange={(v) => update(i.id, { issuer: v })} />
+                    <Field label="Issue Date" value={i.issueDate} onChange={(v) => update(i.id, { issueDate: v })} />
+                    <Field label="Verification Link (optional)" value={i.verifyUrl ?? ""} onChange={(v) => update(i.id, { verifyUrl: v })} />
+                  </div>
+                  <div className="mt-3 flex flex-col gap-3">
+                    <Field label="PDF URL" value={i.pdfUrl} onChange={(v) => update(i.id, { pdfUrl: v })} />
+                    <Field label="Preview Image URL (optional)" value={i.previewUrl ?? ""} onChange={(v) => update(i.id, { previewUrl: v })} />
+                  </div>
+                </div>
+              )}
+            </SortableItem>
+          ))}
+        </SortableContext>
+      </DndContext>
+    </>
+  );
+}
+
+
 function TimelineEditor() {
   const items = useContent((s) => s.timeline);
   const setKey = useContent((s) => s.set);
