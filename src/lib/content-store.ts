@@ -21,6 +21,10 @@ export type Internship = {
   role: string;
   duration: string;
   contributions: string;
+  logoUrl?: string;
+  skills?: string[];
+  certificateUrl?: string;
+  offerLetterUrl?: string;
 };
 
 export type Education = {
@@ -29,6 +33,17 @@ export type Education = {
   institution: string;
   year: string;
   description: string;
+  percentage?: string;
+};
+
+export type Certification = {
+  id: string;
+  name: string;
+  issuer: string;
+  issueDate: string;
+  pdfUrl: string;
+  previewUrl?: string;
+  verifyUrl?: string;
 };
 
 export type TimelineItem = { id: string; title: string; desc: string };
@@ -51,6 +66,7 @@ export type ContentState = {
   projects: Project[];
   internships: Internship[];
   educations: Education[];
+  certifications: Certification[];
   timeline: TimelineItem[];
   techStack: string[];
   contact: {
@@ -73,6 +89,14 @@ export type ContentActions = {
 };
 
 const uid = () => Math.random().toString(36).slice(2, 10);
+
+// Permanent storage URLs proxied through /api/public/m/* (signed under the hood)
+const PDF = {
+  aimersCert: "/api/public/m/portfolio/aimers-internship-certificate.pdf",
+  aimersOffer: "/api/public/m/portfolio/aimers-offer-letter.pdf",
+  hackerrankPython: "/api/public/m/portfolio/hackerrank-python-basic.pdf",
+  simplilearnAzure: "/api/public/m/portfolio/simplilearn-azure-fundamentals.pdf",
+};
 
 const DEFAULTS: ContentState = {
   hero: {
@@ -147,82 +171,90 @@ const DEFAULTS: ContentState = {
   internships: [
     {
       id: uid(),
-      company: "Tech Innovation Labs",
-      role: "Full Stack Developer Intern",
-      duration: "2025 — Present",
+      company: "AIMERS — AI Medical & Engineering Researchers Society",
+      role: "Artificial Intelligence & Cyber Security Intern",
+      duration: "15 May 2025 — 15 Jul 2025 · 8 Weeks",
       contributions:
-        "Built modular React components, contributed to API integrations, and improved performance on key product flows.",
-    },
-    {
-      id: uid(),
-      company: "Digital Studio Collective",
-      role: "Frontend Engineering Intern",
-      duration: "2024 — 2025",
-      contributions:
-        "Crafted motion-driven landing pages, collaborated on design systems, and shipped responsive interfaces.",
-    },
-    {
-      id: uid(),
-      company: "Open Source Contributions",
-      role: "Independent Contributor",
-      duration: "Ongoing",
-      contributions:
-        "Published utilities, improved documentation, and engaged with developer communities around modern web tooling.",
+        "Participated in a structured Artificial Intelligence and Cyber Security Internship Program focused on practical learning, industry tools, problem-solving techniques, machine learning concepts, security awareness, and real-world technology exposure. Built AI models, explored Huggingface, and worked on image classification, object detection, and generative AI.",
+      logoUrl: "",
+      skills: [
+        "Artificial Intelligence",
+        "Machine Learning",
+        "Deep Learning",
+        "Cyber Security",
+        "Ethical Hacking",
+        "Security Protocols",
+      ],
+      certificateUrl: PDF.aimersCert,
+      offerLetterUrl: PDF.aimersOffer,
     },
   ],
   educations: [
     {
       id: uid(),
+      degree: "Secondary School Education (SSC)",
+      institution: "AVRPM Little Angels High School",
+      year: "2022",
+      percentage: "77.83%",
+      description:
+        "Completed Secondary School Education with strong academic foundations and consistent performance.",
+    },
+    {
+      id: uid(),
+      degree: "Intermediate Education (MPC)",
+      institution: "Viswa Bharathi Junior College",
+      year: "2024",
+      percentage: "56.00%",
+      description:
+        "Completed Intermediate Education while strengthening analytical thinking and preparing for higher technical education.",
+    },
+    {
+      id: uid(),
       degree: "B.Tech — Data Science",
       institution: "Currently Pursuing",
       year: "Ongoing",
+      percentage: "",
       description:
         "Pursuing Bachelor of Technology in Data Science with focus on software development, problem solving, and modern computing systems.",
     },
   ],
-  timeline: [
+  certifications: [
     {
       id: uid(),
-      title: "Foundation",
-      desc: "First steps into code, design, and digital craft — building intuition for the web.",
+      name: "AI & Deep Learning Internship",
+      issuer: "AIMER Society",
+      issueDate: "17 Jul 2025",
+      pdfUrl: PDF.aimersCert,
+      verifyUrl: "https://www.AimerSociety.com",
     },
     {
       id: uid(),
-      title: "Learning",
-      desc: "Diving deep into modern stacks, frameworks, patterns, and the engineering mindset.",
+      name: "Python (Basic)",
+      issuer: "HackerRank",
+      issueDate: "19 Aug 2025",
+      pdfUrl: PDF.hackerrankPython,
+      verifyUrl: "https://www.hackerrank.com/certificates/16577F9DB92E",
     },
     {
       id: uid(),
-      title: "Building",
-      desc: "Shipping projects with purpose — translating ideas into real, working products.",
-    },
-    {
-      id: uid(),
-      title: "Experimenting",
-      desc: "Exploring motion, 3D, performance, and creative interactions at the edge of the web.",
-    },
-    {
-      id: uid(),
-      title: "Creating",
-      desc: "Crafting cinematic, scalable, and meaningful digital experiences with intention.",
-    },
-    {
-      id: uid(),
-      title: "Future Vision",
-      desc: "Pushing toward immersive, AI-augmented, story-driven product experiences.",
+      name: "Azure Fundamentals",
+      issuer: "Simplilearn SkillUp",
+      issueDate: "30 Jan 2025",
+      pdfUrl: PDF.simplilearnAzure,
+      verifyUrl: "",
     },
   ],
+  timeline: [
+    { id: uid(), title: "Foundation", desc: "First steps into code, design, and digital craft — building intuition for the web." },
+    { id: uid(), title: "Learning", desc: "Diving deep into modern stacks, frameworks, patterns, and the engineering mindset." },
+    { id: uid(), title: "Building", desc: "Shipping projects with purpose — translating ideas into real, working products." },
+    { id: uid(), title: "Experimenting", desc: "Exploring motion, 3D, performance, and creative interactions at the edge of the web." },
+    { id: uid(), title: "Creating", desc: "Crafting cinematic, scalable, and meaningful digital experiences with intention." },
+    { id: uid(), title: "Future Vision", desc: "Pushing toward immersive, AI-augmented, story-driven product experiences." },
+  ],
   techStack: [
-    "HTML",
-    "CSS",
-    "JavaScript",
-    "TypeScript",
-    "React",
-    "Tailwind CSS",
-    "Node.js",
-    "Git",
-    "GitHub",
-    "Framer Motion",
+    "HTML", "CSS", "JavaScript", "TypeScript", "React", "Tailwind CSS",
+    "Node.js", "Git", "GitHub", "Framer Motion",
   ],
   contact: {
     heading: "Let's Build Something Meaningful",
@@ -250,7 +282,14 @@ export const useContent = create<ContentState & ContentActions>()(
         ),
       reset: () => set({ ...DEFAULTS }),
     }),
-    { name: "iv-reddy-content-v1" },
+    {
+      name: "iv-reddy-content-v3",
+      // Migrate from older persisted shapes by merging with new defaults
+      merge: (persisted, current) => {
+        const p = (persisted as Partial<ContentState>) ?? {};
+        return { ...current, ...p } as ContentState & ContentActions;
+      },
+    },
   ),
 );
 
