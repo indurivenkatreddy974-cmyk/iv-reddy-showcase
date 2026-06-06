@@ -28,6 +28,7 @@ import {
   type Project,
   type Internship,
   type Education,
+  type Certification,
   type TimelineItem,
 } from "@/lib/content-store";
 import { useAdminAuth, getAccessLog, type AccessLogEntry } from "@/lib/admin-auth";
@@ -58,6 +59,7 @@ type TabKey =
   | "projects"
   | "internships"
   | "education"
+  | "certifications"
   | "timeline"
   | "tech"
   | "contact"
@@ -71,6 +73,7 @@ const TABS: { key: TabKey; label: string; icon: typeof User }[] = [
   { key: "projects", label: "Projects", icon: FolderKanban },
   { key: "internships", label: "Internships", icon: Briefcase },
   { key: "education", label: "Education", icon: GraduationCap },
+  { key: "certifications", label: "Certifications", icon: Shield },
   { key: "timeline", label: "Timeline", icon: Activity },
   { key: "tech", label: "Tech Stack", icon: Cpu },
   { key: "contact", label: "Contact", icon: Mail },
@@ -220,6 +223,8 @@ function TabPanel({ tab }: { tab: TabKey }) {
       return <InternshipsEditor />;
     case "education":
       return <EducationEditor />;
+    case "certifications":
+      return <CertificationsEditor />;
     case "timeline":
       return <TimelineEditor />;
     case "tech":
@@ -639,7 +644,17 @@ function InternshipsEditor() {
   const add = () =>
     setKey("internships", [
       ...items,
-      { id: newId(), company: "Company", role: "Role", duration: "Year — Year", contributions: "" },
+      {
+        id: newId(),
+        company: "Company",
+        role: "Role",
+        duration: "Year — Year",
+        contributions: "",
+        logoUrl: "",
+        skills: [],
+        certificateUrl: "",
+        offerLetterUrl: "",
+      },
     ]);
   return (
     <>
@@ -683,29 +698,39 @@ function InternshipsEditor() {
                     </button>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <Field
-                      label="Company"
-                      value={i.company}
-                      onChange={(v) => update(i.id, { company: v })}
-                    />
-                    <Field
-                      label="Role"
-                      value={i.role}
-                      onChange={(v) => update(i.id, { role: v })}
-                    />
-                    <Field
-                      label="Duration"
-                      value={i.duration}
-                      onChange={(v) => update(i.id, { duration: v })}
-                    />
+                    <Field label="Company / Organization" value={i.company} onChange={(v) => update(i.id, { company: v })} />
+                    <Field label="Role" value={i.role} onChange={(v) => update(i.id, { role: v })} />
+                    <Field label="Duration" value={i.duration} onChange={(v) => update(i.id, { duration: v })} />
+                    <Field label="Logo URL" value={i.logoUrl ?? ""} onChange={(v) => update(i.id, { logoUrl: v })} />
                   </div>
-                  <div className="mt-3">
+                  <div className="mt-3 flex flex-col gap-3">
                     <Field
-                      label="Contributions"
+                      label="Description"
                       value={i.contributions}
                       onChange={(v) => update(i.id, { contributions: v })}
                       multiline
                     />
+                    <Field
+                      label="Skills / Technologies (comma-separated)"
+                      value={(i.skills ?? []).join(", ")}
+                      onChange={(v) =>
+                        update(i.id, {
+                          skills: v.split(",").map((s) => s.trim()).filter(Boolean),
+                        })
+                      }
+                    />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <Field
+                        label="Certificate PDF URL"
+                        value={i.certificateUrl ?? ""}
+                        onChange={(v) => update(i.id, { certificateUrl: v })}
+                      />
+                      <Field
+                        label="Offer Letter PDF URL"
+                        value={i.offerLetterUrl ?? ""}
+                        onChange={(v) => update(i.id, { offerLetterUrl: v })}
+                      />
+                    </div>
                   </div>
                 </div>
               )}
@@ -734,7 +759,7 @@ function EducationEditor() {
   const add = () =>
     setKey("educations", [
       ...items,
-      { id: newId(), degree: "Degree", institution: "Institution", year: "Year", description: "" },
+      { id: newId(), degree: "Degree", institution: "Institution", year: "Year", percentage: "", description: "" },
     ]);
   return (
     <>
@@ -779,7 +804,7 @@ function EducationEditor() {
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <Field
-                      label="Degree"
+                      label="Qualification"
                       value={i.degree}
                       onChange={(v) => update(i.id, { degree: v })}
                     />
@@ -792,6 +817,11 @@ function EducationEditor() {
                       label="Year"
                       value={i.year}
                       onChange={(v) => update(i.id, { year: v })}
+                    />
+                    <Field
+                      label="Percentage (e.g. 77.83%)"
+                      value={i.percentage ?? ""}
+                      onChange={(v) => update(i.id, { percentage: v })}
                     />
                   </div>
                   <div className="mt-3">
