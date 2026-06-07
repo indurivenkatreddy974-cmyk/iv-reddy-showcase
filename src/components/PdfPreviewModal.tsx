@@ -86,7 +86,7 @@ export function PdfPreviewModal({ open, url, title, onClose }: PdfPreviewModalPr
     void import("react-pdf")
       .then((mod) => {
         mod.pdfjs.GlobalWorkerOptions.workerSrc = new URL(
-          "pdfjs-dist/build/pdf.worker.min.mjs",
+          "react-pdf/node_modules/pdfjs-dist/build/pdf.worker.min.mjs",
           import.meta.url,
         ).toString();
         if (!cancelled) setPdfRuntime(mod);
