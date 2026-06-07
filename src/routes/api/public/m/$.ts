@@ -8,6 +8,8 @@ export const Route = createFileRoute("/api/public/m/$")({
         if (!path || path.includes("..")) {
           return new Response("Not found", { status: 404 });
         }
+        const requestUrl = new URL(request.url);
+        const downloadName = requestUrl.searchParams.get("download")?.trim();
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
         const { data: signed, error } = await supabaseAdmin.storage
           .from("showcase-media")
@@ -23,7 +25,13 @@ export const Route = createFileRoute("/api/public/m/$")({
           const v = upstream.headers.get(h);
           if (v) headers.set(h, v);
         }
-        headers.set("cache-control", "public, max-age=300");
+        if (downloadName) {
+          headers.set(
+            "content-disposition",
+            `attachment; filename="${downloadName.replace(/[\r\n"]/g, "_")}"`,
+          );
+        }
+        headers.set("cache-control", downloadName ? "public, max-age=3600, immutable" : "public, max-age=300");
         return new Response(upstream.body, { status: upstream.status, headers });
       },
     },
