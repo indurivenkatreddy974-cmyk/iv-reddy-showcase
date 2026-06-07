@@ -15,7 +15,6 @@ import {
   ZoomOut,
 } from "lucide-react";
 import { Document, Page, pdfjs } from "react-pdf";
-import type { PDFDocumentProxy } from "pdfjs-dist/types/src/display/api";
 import {
   getDocumentFilename,
   getDocumentKind,
@@ -130,7 +129,7 @@ export function PdfPreviewModal({ open, url, title, onClose }: PdfPreviewModalPr
               file={normalizedUrl}
               loading={<LoadingState label="Opening document" />}
               error={<FallbackState message="Document unavailable" url={normalizedUrl} title={title} />}
-              onLoadSuccess={(pdf: PDFDocumentProxy) => {
+              onLoadSuccess={(pdf) => {
                 setNumPages(pdf.numPages);
                 setPageNumber((current) => Math.min(Math.max(1, current), pdf.numPages));
                 setLoadError(null);
