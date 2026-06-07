@@ -83,12 +83,12 @@ export function PdfPreviewModal({ open, url, title, onClose }: PdfPreviewModalPr
     if (!open || documentKind !== "pdf" || pdfRuntime) return;
 
     let cancelled = false;
-    void import("react-pdf")
-      .then((mod) => {
-        mod.pdfjs.GlobalWorkerOptions.workerSrc = new URL(
-          "react-pdf/node_modules/pdfjs-dist/build/pdf.worker.min.mjs",
-          import.meta.url,
-        ).toString();
+    void Promise.all([
+      import("react-pdf"),
+      import("react-pdf/node_modules/pdfjs-dist/build/pdf.worker.min.mjs?url"),
+    ])
+      .then(([mod, workerSrc]) => {
+        mod.pdfjs.GlobalWorkerOptions.workerSrc = workerSrc.default;
         if (!cancelled) setPdfRuntime(mod);
       })
       .catch(() => {
