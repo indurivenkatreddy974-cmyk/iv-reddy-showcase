@@ -16,14 +16,11 @@ import {
 } from "lucide-react";
 import {
   getDocumentFilename,
+  getDownloadUrl,
   getDocumentKind,
   normalizeUrl,
   triggerDocumentDownload,
 } from "@/lib/document-utils";
-import "react-pdf/dist/Page/AnnotationLayer.css";
-import "react-pdf/dist/Page/TextLayer.css";
-
-type PdfRuntime = typeof import("react-pdf");
 
 export type PdfPreviewModalProps = {
   open: boolean;
@@ -33,22 +30,19 @@ export type PdfPreviewModalProps = {
 };
 
 export function PdfPreviewModal({ open, url, title, onClose }: PdfPreviewModalProps) {
-  const [pdfRuntime, setPdfRuntime] = useState<PdfRuntime | null>(null);
   const [zoom, setZoom] = useState(1);
-  const [numPages, setNumPages] = useState(0);
   const [pageNumber, setPageNumber] = useState(1);
-  const [containerWidth, setContainerWidth] = useState(920);
   const [loadError, setLoadError] = useState<string | null>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
-  const viewportRef = useRef<HTMLDivElement>(null);
   const normalizedUrl = useMemo(() => normalizeUrl(url), [url]);
   const documentKind = useMemo(() => getDocumentKind(normalizedUrl), [normalizedUrl]);
+  const previewUrl = useMemo(() => buildPreviewUrl(normalizedUrl, pageNumber, zoom), [normalizedUrl, pageNumber, zoom]);
 
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
-      if (documentKind === "pdf" && e.key === "ArrowRight") setPageNumber((p) => Math.min(numPages || 1, p + 1));
+      if (documentKind === "pdf" && e.key === "ArrowRight") setPageNumber((p) => p + 1);
       if (documentKind === "pdf" && e.key === "ArrowLeft") setPageNumber((p) => Math.max(1, p - 1));
     };
     window.addEventListener("keydown", onKey);
@@ -57,48 +51,14 @@ export function PdfPreviewModal({ open, url, title, onClose }: PdfPreviewModalPr
       window.removeEventListener("keydown", onKey);
       document.body.style.overflow = "";
     };
-  }, [open, onClose, documentKind, numPages]);
+  }, [open, onClose, documentKind]);
 
   useEffect(() => {
     if (!open) return;
     setZoom(1);
     setPageNumber(1);
-    setNumPages(0);
     setLoadError(null);
   }, [open, normalizedUrl]);
-
-  useEffect(() => {
-    if (!open || !viewportRef.current || typeof ResizeObserver === "undefined") return;
-    const update = () => {
-      const width = viewportRef.current?.clientWidth ?? 920;
-      setContainerWidth(Math.max(280, width - 40));
-    };
-    update();
-    const observer = new ResizeObserver(update);
-    observer.observe(viewportRef.current);
-    return () => observer.disconnect();
-  }, [open]);
-
-  useEffect(() => {
-    if (!open || documentKind !== "pdf" || pdfRuntime) return;
-
-    let cancelled = false;
-    void Promise.all([
-      import("react-pdf"),
-      import("react-pdf/node_modules/pdfjs-dist/build/pdf.worker.min.mjs?url"),
-    ])
-      .then(([mod, workerSrc]) => {
-        mod.pdfjs.GlobalWorkerOptions.workerSrc = workerSrc.default;
-        if (!cancelled) setPdfRuntime(mod);
-      })
-      .catch(() => {
-        if (!cancelled) setLoadError("Document unavailable");
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [open, documentKind, pdfRuntime]);
 
   const fullscreen = () => {
     const el = wrapRef.current;
@@ -112,9 +72,6 @@ export function PdfPreviewModal({ open, url, title, onClose }: PdfPreviewModalPr
       setLoadError("Document unavailable");
     }
   };
-
-  const canPaginate = documentKind === "pdf" && numPages > 1;
-  const pageWidth = Math.min(1200, Math.max(280, containerWidth * zoom));
 
   const renderBody = () => {
     if (!normalizedUrl) {
@@ -140,35 +97,16 @@ export function PdfPreviewModal({ open, url, title, onClose }: PdfPreviewModalPr
     }
 
     if (documentKind === "pdf") {
-      if (!pdfRuntime) {
-        return <LoadingState label="Preparing document viewer" />;
-      }
-
-      const { Document, Page } = pdfRuntime;
       return (
-        <div ref={viewportRef} className="w-full h-full overflow-auto p-2 sm:p-6">
-          <div className="flex justify-center min-h-full">
-            <Document
-              file={normalizedUrl}
-              loading={<LoadingState label="Opening document" />}
-              error={<FallbackState message="Document unavailable" url={normalizedUrl} title={title} />}
-              onLoadSuccess={(pdf) => {
-                setNumPages(pdf.numPages);
-                setPageNumber((current) => Math.min(Math.max(1, current), pdf.numPages));
-                setLoadError(null);
-              }}
-              onLoadError={() => setLoadError("Document unavailable")}
-              options={{ cMapUrl: "/cmaps/", standardFontDataUrl: "/standard_fonts/" }}
-            >
-              <Page
-                pageNumber={pageNumber}
-                width={pageWidth}
-                renderTextLayer
-                renderAnnotationLayer
-                loading={<LoadingState label={`Loading page ${pageNumber}`} compact />}
-              />
-            </Document>
-          </div>
+        <div className="w-full h-full overflow-hidden bg-[#141414]">
+          <iframe
+            key={previewUrl}
+            src={previewUrl}
+            title={title ?? "PDF preview"}
+            className="w-full h-full border-0"
+            onLoad={() => setLoadError(null)}
+            onError={() => setLoadError("Document unavailable")}
+          />
         </div>
       );
     }
@@ -246,11 +184,10 @@ export function PdfPreviewModal({ open, url, title, onClose }: PdfPreviewModalPr
                       <ChevronLeft className="w-4 h-4" />
                     </button>
                     <div className="text-[10px] uppercase tracking-widest text-[#D7E2EA]/60 min-w-[84px] text-center">
-                      {numPages ? `${pageNumber} / ${numPages}` : "Page —"}
+                      {`Page ${pageNumber}`}
                     </div>
                     <button
-                      onClick={() => setPageNumber((p) => Math.min(numPages || 1, p + 1))}
-                      disabled={!canPaginate || pageNumber >= numPages}
+                      onClick={() => setPageNumber((p) => p + 1)}
                       className="w-8 h-8 rounded-lg flex items-center justify-center text-[#D7E2EA]/70 hover:text-white hover:bg-white/10 disabled:opacity-30"
                       aria-label="Next page"
                     >
@@ -268,7 +205,7 @@ export function PdfPreviewModal({ open, url, title, onClose }: PdfPreviewModalPr
                 <Maximize2 className="w-4 h-4" />
               </button>
               <a
-                href={normalizedUrl || "#"}
+                href={previewUrl || "#"}
                 target="_blank"
                 rel="noreferrer"
                 className="w-8 h-8 rounded-lg flex items-center justify-center text-[#D7E2EA]/70 hover:text-white hover:bg-white/10"
@@ -343,4 +280,26 @@ function FallbackState({ message, url, title }: { message: string; url?: string;
       </div>
     </div>
   );
+}
+
+function buildPreviewUrl(rawUrl: string, pageNumber: number, zoom: number) {
+  if (!rawUrl) return "";
+
+  const base = appendPreviewToken(rawUrl);
+  const zoomPercent = Math.round(zoom * 100);
+  return `${base}#page=${Math.max(1, pageNumber)}&zoom=${zoomPercent}&toolbar=0&navpanes=0&scrollbar=1`;
+}
+
+function appendPreviewToken(rawUrl: string) {
+  try {
+    const base = new URL(rawUrl, window.location.origin);
+    const current = new URL(window.location.href);
+    const lovableToken = current.searchParams.get("__lovable_token");
+    if (lovableToken && !base.searchParams.has("__lovable_token")) {
+      base.searchParams.set("__lovable_token", lovableToken);
+    }
+    return base.toString();
+  } catch {
+    return rawUrl;
+  }
 }
