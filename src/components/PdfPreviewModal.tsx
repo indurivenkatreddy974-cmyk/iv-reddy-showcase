@@ -14,7 +14,6 @@ import {
   ZoomIn,
   ZoomOut,
 } from "lucide-react";
-import { Document, Page, pdfjs } from "react-pdf";
 import {
   getDocumentFilename,
   getDocumentKind,
@@ -24,10 +23,7 @@ import {
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
 
-pdfjs.GlobalWorkerOptions.workerSrc = new URL(
-  "pdfjs-dist/build/pdf.worker.min.mjs",
-  import.meta.url,
-).toString();
+type PdfRuntime = typeof import("react-pdf");
 
 export type PdfPreviewModalProps = {
   open: boolean;
@@ -37,6 +33,7 @@ export type PdfPreviewModalProps = {
 };
 
 export function PdfPreviewModal({ open, url, title, onClose }: PdfPreviewModalProps) {
+  const [pdfRuntime, setPdfRuntime] = useState<PdfRuntime | null>(null);
   const [zoom, setZoom] = useState(1);
   const [numPages, setNumPages] = useState(0);
   const [pageNumber, setPageNumber] = useState(1);
@@ -82,6 +79,27 @@ export function PdfPreviewModal({ open, url, title, onClose }: PdfPreviewModalPr
     return () => observer.disconnect();
   }, [open]);
 
+  useEffect(() => {
+    if (!open || documentKind !== "pdf" || pdfRuntime) return;
+
+    let cancelled = false;
+    void import("react-pdf")
+      .then((mod) => {
+        mod.pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+          "pdfjs-dist/build/pdf.worker.min.mjs",
+          import.meta.url,
+        ).toString();
+        if (!cancelled) setPdfRuntime(mod);
+      })
+      .catch(() => {
+        if (!cancelled) setLoadError("Document unavailable");
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [open, documentKind, pdfRuntime]);
+
   const fullscreen = () => {
     const el = wrapRef.current;
     if (!el) return;
@@ -122,6 +140,11 @@ export function PdfPreviewModal({ open, url, title, onClose }: PdfPreviewModalPr
     }
 
     if (documentKind === "pdf") {
+      if (!pdfRuntime) {
+        return <LoadingState label="Preparing document viewer" />;
+      }
+
+      const { Document, Page } = pdfRuntime;
       return (
         <div ref={viewportRef} className="w-full h-full overflow-auto p-2 sm:p-6">
           <div className="flex justify-center min-h-full">
