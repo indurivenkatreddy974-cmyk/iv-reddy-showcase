@@ -1,0 +1,112 @@
+export type DocumentKind = "pdf" | "image" | "web" | "unknown";
+
+const IMAGE_EXTENSIONS = [".png", ".jpg", ".jpeg", ".webp", ".gif", ".avif", ".svg"];
+
+export function normalizeUrl(raw?: string | null): string {
+  const value = raw?.trim() ?? "";
+  if (!value) return "";
+  if (value.startsWith("/") || value.startsWith("blob:") || value.startsWith("data:")) return value;
+  if (/^https?:\/\//i.test(value)) return value;
+  if (/^www\./i.test(value)) return `https://${value}`;
+  if (/^[\w.-]+\.[a-z]{2,}(\/.*)?$/i.test(value)) return `https://${value}`;
+  return value;
+}
+
+export function getDocumentKind(raw?: string | null): DocumentKind {
+  const value = normalizeUrl(raw).toLowerCase();
+  if (!value) return "unknown";
+  if (value.startsWith("data:image/")) return "image";
+
+  const pathname = (() => {
+    try {
+      return new URL(value, "http://localhost").pathname.toLowerCase();
+    } catch {
+      return value.toLowerCase();
+    }
+  })();
+
+  if (pathname.endsWith(".pdf")) return "pdf";
+  if (IMAGE_EXTENSIONS.some((ext) => pathname.endsWith(ext))) return "image";
+  if (/^https?:\/\//i.test(value)) return "web";
+  return "unknown";
+}
+
+export function normalizeExternalUrl(raw?: string | null): string | null {
+  const value = normalizeUrl(raw);
+  if (!value) return null;
+
+  try {
+    const url = new URL(value, typeof window !== "undefined" ? window.location.origin : "http://localhost");
+    if (url.protocol !== "http:" && url.protocol !== "https:") return null;
+    return url.toString();
+  } catch {
+    return null;
+  }
+}
+
+function slugify(value: string) {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "") || "document";
+}
+
+export function getDocumentFilename(rawUrl?: string | null, title?: string) {
+  const normalized = normalizeUrl(rawUrl);
+
+  try {
+    const pathname = new URL(
+      normalized,
+      typeof window !== "undefined" ? window.location.origin : "http://localhost",
+    ).pathname;
+    const last = pathname.split("/").filter(Boolean).pop();
+    if (last) return decodeURIComponent(last);
+  } catch {
+    // ignore and fall back
+  }
+
+  const ext = getDocumentKind(normalized) === "image" ? ".jpg" : ".pdf";
+  return `${slugify(title ?? "document")}${ext}`;
+}
+
+export function getDownloadUrl(rawUrl?: string | null, title?: string) {
+  const normalized = normalizeUrl(rawUrl);
+  if (!normalized) return "";
+
+  try {
+    const url = new URL(
+      normalized,
+      typeof window !== "undefined" ? window.location.origin : "http://localhost",
+    );
+    const isProxyRoute = url.pathname.startsWith("/api/public/m/");
+    if (isProxyRoute) {
+      url.searchParams.set("download", getDocumentFilename(normalized, title));
+      return url.toString();
+    }
+    return url.toString();
+  } catch {
+    return normalized;
+  }
+}
+
+export function triggerDocumentDownload(rawUrl?: string | null, title?: string) {
+  const normalized = normalizeUrl(rawUrl);
+  if (!normalized || typeof document === "undefined") return false;
+
+  const link = document.createElement("a");
+  link.href = getDownloadUrl(normalized, title);
+  link.rel = "noreferrer";
+  link.download = getDocumentFilename(normalized, title);
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  return true;
+}
+
+export function openVerifiedLink(rawUrl?: string | null) {
+  const normalized = normalizeExternalUrl(rawUrl);
+  if (!normalized || typeof window === "undefined") return false;
+  window.open(normalized, "_blank", "noopener,noreferrer");
+  return true;
+}

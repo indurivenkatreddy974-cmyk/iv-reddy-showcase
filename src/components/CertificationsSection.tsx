@@ -3,8 +3,15 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { FadeIn } from "./FadeIn";
 import { useContent, type Certification } from "@/lib/content-store";
-import { Award, Eye, ExternalLink, FileText } from "lucide-react";
+import { Award, Download, Eye, ExternalLink, FileText } from "lucide-react";
 import { PdfPreviewModal } from "./PdfPreviewModal";
+import {
+  getDocumentKind,
+  normalizeExternalUrl,
+  normalizeUrl,
+  openVerifiedLink,
+  triggerDocumentDownload,
+} from "@/lib/document-utils";
 
 export function CertificationsSection() {
   const items = useContent((s) => s.certifications);
@@ -54,6 +61,21 @@ function CertCard({
   cert: Certification;
   onPreview: (url: string, title: string) => void;
 }) {
+  const documentUrl = normalizeUrl(cert.pdfUrl);
+  const verificationUrl = normalizeExternalUrl(cert.verifyUrl);
+  const documentKind = getDocumentKind(documentUrl);
+  const canPreviewDocument = documentKind === "pdf" || documentKind === "image";
+
+  const handleVerify = () => {
+    if (verificationUrl) {
+      openVerifiedLink(verificationUrl);
+      return;
+    }
+    if (documentUrl && canPreviewDocument) {
+      onPreview(documentUrl, `${cert.name} — ${cert.issuer}`);
+    }
+  };
+
   return (
     <motion.div
       whileHover={{ y: -6 }}
@@ -64,7 +86,7 @@ function CertCard({
         border: "1px solid rgba(215,226,234,0.1)",
         backdropFilter: "blur(20px)",
       }}
-      onClick={() => cert.pdfUrl && onPreview(cert.pdfUrl, `${cert.name} — ${cert.issuer}`)}
+      onClick={() => documentUrl && canPreviewDocument && onPreview(documentUrl, `${cert.name} — ${cert.issuer}`)}
     >
       {/* Glow border on hover */}
       <div
@@ -115,25 +137,35 @@ function CertCard({
         <div className="text-xs text-[#D7E2EA]/50">Issued {cert.issueDate}</div>
 
         <div className="flex items-center gap-2 mt-auto pt-3" onClick={(e) => e.stopPropagation()}>
-          {cert.pdfUrl && (
+          {documentUrl && (
             <button
-              onClick={() => onPreview(cert.pdfUrl, `${cert.name} — ${cert.issuer}`)}
+              onClick={() => {
+                if (canPreviewDocument) onPreview(documentUrl, `${cert.name} — ${cert.issuer}`);
+              }}
               className="flex-1 flex items-center justify-center gap-2 text-[11px] uppercase tracking-widest px-4 py-2.5 rounded-full text-white"
               style={{ background: "linear-gradient(135deg, #4a9eff, #7621B0)" }}
+              disabled={!canPreviewDocument}
             >
               <Eye className="w-3.5 h-3.5" /> View
             </button>
           )}
-          {cert.verifyUrl && (
-            <a
-              href={cert.verifyUrl}
-              target="_blank"
-              rel="noreferrer"
+          {documentUrl && (
+            <button
+              onClick={() => triggerDocumentDownload(documentUrl, `${cert.name} ${cert.issuer}`)}
               className="flex items-center justify-center gap-2 text-[11px] uppercase tracking-widest px-4 py-2.5 rounded-full border border-[#D7E2EA]/20 text-[#D7E2EA]/85 hover:text-white hover:border-[#4a9eff]/50 transition"
-              title="Verify"
+              title="Download"
+            >
+              <Download className="w-3.5 h-3.5" />
+            </button>
+          )}
+          {(verificationUrl || (documentUrl && canPreviewDocument)) && (
+            <button
+              onClick={handleVerify}
+              className="flex items-center justify-center gap-2 text-[11px] uppercase tracking-widest px-4 py-2.5 rounded-full border border-[#D7E2EA]/20 text-[#D7E2EA]/85 hover:text-white hover:border-[#4a9eff]/50 transition"
+              title={verificationUrl ? "Verify" : "Open certificate"}
             >
               <ExternalLink className="w-3.5 h-3.5" />
-            </a>
+            </button>
           )}
         </div>
       </div>

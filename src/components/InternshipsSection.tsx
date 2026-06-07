@@ -2,8 +2,9 @@
 import { useState } from "react";
 import { FadeIn } from "./FadeIn";
 import { useContent, type Internship } from "@/lib/content-store";
-import { Building2, FileText, FileSignature, Eye, Download } from "lucide-react";
+import { Building2, FileSignature, Eye, Download } from "lucide-react";
 import { PdfPreviewModal } from "./PdfPreviewModal";
+import { normalizeUrl, triggerDocumentDownload } from "@/lib/document-utils";
 
 export function InternshipsSection() {
   const internships = useContent((s) => s.internships);
@@ -52,6 +53,8 @@ function InternshipCard({
   onPreview: (url: string, title: string) => void;
 }) {
   const skills = item.skills ?? [];
+  const certificateUrl = normalizeUrl(item.certificateUrl);
+  const offerLetterUrl = normalizeUrl(item.offerLetterUrl);
   return (
     <div className="tech-card rounded-3xl p-7 md:p-9 h-full flex flex-col gap-5">
       <div className="flex items-start gap-4">
@@ -98,22 +101,38 @@ function InternshipCard({
       )}
 
       <div className="flex flex-wrap gap-2 mt-auto pt-2">
-        {item.certificateUrl && (
-          <button
-            onClick={() => onPreview(item.certificateUrl!, `${item.company} — Certificate`)}
-            className="flex items-center gap-2 text-[11px] uppercase tracking-widest px-4 py-2.5 rounded-full text-white"
-            style={{ background: "linear-gradient(135deg, #4a9eff, #7621B0)" }}
-          >
-            <Eye className="w-3.5 h-3.5" /> Certificate
-          </button>
+        {certificateUrl && (
+          <>
+            <button
+              onClick={() => onPreview(certificateUrl, `${item.company} — Completion Certificate`)}
+              className="flex items-center gap-2 text-[11px] uppercase tracking-widest px-4 py-2.5 rounded-full text-white"
+              style={{ background: "linear-gradient(135deg, #4a9eff, #7621B0)" }}
+            >
+              <Eye className="w-3.5 h-3.5" /> View Certificate
+            </button>
+            <button
+              onClick={() => triggerDocumentDownload(certificateUrl, `${item.company} Certificate`)}
+              className="flex items-center gap-2 text-[11px] uppercase tracking-widest px-4 py-2.5 rounded-full border border-[#D7E2EA]/20 text-[#D7E2EA]/85 hover:text-white hover:border-[#4a9eff]/50 transition"
+            >
+              <Download className="w-3.5 h-3.5" /> Download Certificate
+            </button>
+          </>
         )}
-        {item.offerLetterUrl && (
-          <button
-            onClick={() => onPreview(item.offerLetterUrl!, `${item.company} — Offer Letter`)}
-            className="flex items-center gap-2 text-[11px] uppercase tracking-widest px-4 py-2.5 rounded-full border border-[#D7E2EA]/20 text-[#D7E2EA]/85 hover:text-white hover:border-[#4a9eff]/50 transition"
-          >
-            <FileSignature className="w-3.5 h-3.5" /> Offer Letter
-          </button>
+        {offerLetterUrl && (
+          <>
+            <button
+              onClick={() => onPreview(offerLetterUrl, `${item.company} — Offer Letter`)}
+              className="flex items-center gap-2 text-[11px] uppercase tracking-widest px-4 py-2.5 rounded-full border border-[#D7E2EA]/20 text-[#D7E2EA]/85 hover:text-white hover:border-[#4a9eff]/50 transition"
+            >
+              <FileSignature className="w-3.5 h-3.5" /> View Offer Letter
+            </button>
+            <button
+              onClick={() => triggerDocumentDownload(offerLetterUrl, `${item.company} Offer Letter`)}
+              className="flex items-center gap-2 text-[11px] uppercase tracking-widest px-4 py-2.5 rounded-full border border-[#D7E2EA]/20 text-[#D7E2EA]/85 hover:text-white hover:border-[#4a9eff]/50 transition"
+            >
+              <Download className="w-3.5 h-3.5" /> Download Offer Letter
+            </button>
+          </>
         )}
       </div>
     </div>
