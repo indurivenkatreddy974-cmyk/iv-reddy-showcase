@@ -704,6 +704,9 @@ function InternshipsEditor() {
                     <Field label="Logo URL" value={i.logoUrl ?? ""} onChange={(v) => update(i.id, { logoUrl: v })} />
                   </div>
                   <div className="mt-3 flex flex-col gap-3">
+                    <div className="text-[10px] uppercase tracking-[0.25em] text-[#D7E2EA]/40">
+                      Use uploaded document paths like /api/public/m/portfolio/your-file.pdf for best preview and download speed.
+                    </div>
                     <Field
                       label="Description"
                       value={i.contributions}
@@ -916,7 +919,10 @@ function CertificationsEditor() {
                     <Field label="Verification Link (optional)" value={i.verifyUrl ?? ""} onChange={(v) => update(i.id, { verifyUrl: v })} />
                   </div>
                   <div className="mt-3 flex flex-col gap-3">
-                    <Field label="PDF URL" value={i.pdfUrl} onChange={(v) => update(i.id, { pdfUrl: v })} />
+                    <div className="text-[10px] uppercase tracking-[0.25em] text-[#D7E2EA]/40">
+                      Add a direct PDF or image document URL. Leave verification link empty unless it opens the real issuer page.
+                    </div>
+                    <Field label="Certificate File URL" value={i.pdfUrl} onChange={(v) => update(i.id, { pdfUrl: v })} />
                     <Field label="Preview Image URL (optional)" value={i.previewUrl ?? ""} onChange={(v) => update(i.id, { previewUrl: v })} />
                   </div>
                 </div>
