@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   AlertCircle,
@@ -10,17 +10,25 @@ import {
   FileText,
   Loader2,
   Maximize2,
+  Minimize2,
+  Move,
+  StretchHorizontal,
   X,
   ZoomIn,
   ZoomOut,
 } from "lucide-react";
+import { Document, Page, pdfjs } from "react-pdf";
+import pdfjsWorker from "pdfjs-dist/build/pdf.worker.min.mjs?url";
+import "react-pdf/dist/Page/AnnotationLayer.css";
+import "react-pdf/dist/Page/TextLayer.css";
 import {
   getDocumentFilename,
-  getDownloadUrl,
   getDocumentKind,
   normalizeUrl,
   triggerDocumentDownload,
 } from "@/lib/document-utils";
+
+pdfjs.GlobalWorkerOptions.workerSrc = pdfjsWorker;
 
 export type PdfPreviewModalProps = {
   open: boolean;
@@ -29,21 +37,57 @@ export type PdfPreviewModalProps = {
   onClose: () => void;
 };
 
+type FitMode = "custom" | "width" | "page";
+
 export function PdfPreviewModal({ open, url, title, onClose }: PdfPreviewModalProps) {
   const [zoom, setZoom] = useState(1);
+  const [fit, setFit] = useState<FitMode>("width");
   const [pageNumber, setPageNumber] = useState(1);
+  const [numPages, setNumPages] = useState<number>(0);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [ready, setReady] = useState(false);
+  const [containerWidth, setContainerWidth] = useState<number>(0);
+  const [containerHeight, setContainerHeight] = useState<number>(0);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
   const wrapRef = useRef<HTMLDivElement>(null);
+  const viewportRef = useRef<HTMLDivElement>(null);
+
   const normalizedUrl = useMemo(() => normalizeUrl(url), [url]);
   const documentKind = useMemo(() => getDocumentKind(normalizedUrl), [normalizedUrl]);
-  const previewUrl = useMemo(() => buildPreviewUrl(normalizedUrl, pageNumber, zoom), [normalizedUrl, pageNumber, zoom]);
 
+  // Reset on new document
+  useEffect(() => {
+    if (!open) return;
+    setZoom(1);
+    setFit("width");
+    setPageNumber(1);
+    setNumPages(0);
+    setLoadError(null);
+    setReady(false);
+  }, [open, normalizedUrl]);
+
+  // Keyboard
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
-      if (documentKind === "pdf" && e.key === "ArrowRight") setPageNumber((p) => p + 1);
-      if (documentKind === "pdf" && e.key === "ArrowLeft") setPageNumber((p) => Math.max(1, p - 1));
+      if (documentKind !== "pdf") return;
+      if (e.key === "ArrowRight" || e.key === "PageDown")
+        setPageNumber((p) => Math.min(numPages || p + 1, p + 1));
+      if (e.key === "ArrowLeft" || e.key === "PageUp")
+        setPageNumber((p) => Math.max(1, p - 1));
+      if (e.key === "+" || e.key === "=") {
+        setFit("custom");
+        setZoom((z) => Math.min(3, +(z + 0.2).toFixed(2)));
+      }
+      if (e.key === "-" || e.key === "_") {
+        setFit("custom");
+        setZoom((z) => Math.max(0.4, +(z - 0.2).toFixed(2)));
+      }
+      if (e.key === "0") {
+        setFit("width");
+      }
     };
     window.addEventListener("keydown", onKey);
     document.body.style.overflow = "hidden";
@@ -51,36 +95,57 @@ export function PdfPreviewModal({ open, url, title, onClose }: PdfPreviewModalPr
       window.removeEventListener("keydown", onKey);
       document.body.style.overflow = "";
     };
-  }, [open, onClose, documentKind]);
+  }, [open, onClose, documentKind, numPages]);
 
+  // Track fullscreen state
+  useEffect(() => {
+    const onFs = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener("fullscreenchange", onFs);
+    return () => document.removeEventListener("fullscreenchange", onFs);
+  }, []);
+
+  // Track viewport size for fit modes
   useEffect(() => {
     if (!open) return;
-    setZoom(1);
-    setPageNumber(1);
-    setLoadError(null);
-  }, [open, normalizedUrl]);
+    const el = viewportRef.current;
+    if (!el) return;
+    const measure = () => {
+      const rect = el.getBoundingClientRect();
+      setContainerWidth(rect.width - 32);
+      setContainerHeight(rect.height - 32);
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [open, ready]);
 
-  const fullscreen = () => {
+  const toggleFullscreen = () => {
     const el = wrapRef.current;
     if (!el) return;
-    if (document.fullscreenElement) document.exitFullscreen();
-    else el.requestFullscreen?.();
+    if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+    else el.requestFullscreen?.().catch(() => {});
   };
 
-  const handleDownload = () => {
+  const handleDownload = useCallback(() => {
     if (!triggerDocumentDownload(normalizedUrl, title)) {
       setLoadError("Document unavailable");
     }
-  };
+  }, [normalizedUrl, title]);
+
+  const documentFile = useMemo(
+    () => (normalizedUrl ? { url: normalizedUrl, withCredentials: false } : null),
+    [normalizedUrl],
+  );
+
+  const pageWidth =
+    fit === "width" ? containerWidth || undefined : fit === "page" ? undefined : undefined;
+  const pageHeight = fit === "page" ? containerHeight || undefined : undefined;
+  const pageScale = fit === "custom" ? zoom : undefined;
 
   const renderBody = () => {
-    if (!normalizedUrl) {
-      return <FallbackState message="Document unavailable" />;
-    }
-
-    if (loadError) {
-      return <FallbackState message={loadError} url={normalizedUrl} title={title} />;
-    }
+    if (!normalizedUrl) return <FallbackState message="Document unavailable" />;
+    if (loadError) return <FallbackState message={loadError} url={normalizedUrl} title={title} />;
 
     if (documentKind === "image") {
       return (
@@ -88,8 +153,9 @@ export function PdfPreviewModal({ open, url, title, onClose }: PdfPreviewModalPr
           <img
             src={normalizedUrl}
             alt={title ?? "Document preview"}
-            className="max-w-full h-auto rounded-2xl"
-            style={{ width: `${zoom * 100}%`, maxWidth: 1200 }}
+            className="rounded-2xl shadow-2xl"
+            style={{ width: `${zoom * 100}%`, maxWidth: 1400, height: "auto" }}
+            onLoad={() => setReady(true)}
             onError={() => setLoadError("Document unavailable")}
           />
         </div>
@@ -98,15 +164,47 @@ export function PdfPreviewModal({ open, url, title, onClose }: PdfPreviewModalPr
 
     if (documentKind === "pdf") {
       return (
-        <div className="w-full h-full overflow-hidden bg-[#141414]">
-          <iframe
-            key={previewUrl}
-            src={previewUrl}
-            title={title ?? "PDF preview"}
-            className="w-full h-full border-0"
-            onLoad={() => setLoadError(null)}
-            onError={() => setLoadError("Document unavailable")}
-          />
+        <div
+          ref={viewportRef}
+          className="w-full h-full overflow-auto flex items-start justify-center px-4 py-4 sm:py-6"
+          style={{ background: "#141414" }}
+        >
+          <Document
+            file={documentFile ?? undefined}
+            onLoadSuccess={(doc) => {
+              setNumPages(doc.numPages);
+              setReady(true);
+              setLoadError(null);
+            }}
+            onLoadError={(err) => {
+              console.error("[PDF] load error", err);
+              setLoadError("Failed to render document. It may be missing or unsupported.");
+            }}
+            loading={<LoadingState label="Loading document…" />}
+            error={<FallbackState message="Failed to render document" url={normalizedUrl} title={title} />}
+            noData={<FallbackState message="Document unavailable" url={normalizedUrl} title={title} />}
+          >
+            {ready && (
+              <div
+                className="rounded-2xl overflow-hidden shadow-2xl"
+                style={{
+                  background: "#fff",
+                  boxShadow: "0 30px 80px -20px rgba(0,0,0,0.6)",
+                }}
+              >
+                <Page
+                  key={`p-${pageNumber}-${fit}-${zoom}-${containerWidth}-${containerHeight}`}
+                  pageNumber={pageNumber}
+                  width={pageWidth}
+                  height={pageHeight}
+                  scale={pageScale}
+                  renderAnnotationLayer
+                  renderTextLayer
+                  loading={<LoadingState label={`Rendering page ${pageNumber}…`} compact />}
+                />
+              </div>
+            )}
+          </Document>
         </div>
       );
     }
@@ -125,7 +223,7 @@ export function PdfPreviewModal({ open, url, title, onClose }: PdfPreviewModalPr
         >
           <div
             className="absolute inset-0"
-            style={{ background: "rgba(0,0,0,0.85)", backdropFilter: "blur(24px)" }}
+            style={{ background: "rgba(0,0,0,0.88)", backdropFilter: "blur(24px)" }}
             onClick={onClose}
           />
           <motion.div
@@ -134,13 +232,14 @@ export function PdfPreviewModal({ open, url, title, onClose }: PdfPreviewModalPr
             animate={{ scale: 1, y: 0, opacity: 1 }}
             exit={{ scale: 0.96, opacity: 0 }}
             transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
-            className="relative w-full max-w-6xl h-[92vh] rounded-2xl sm:rounded-3xl overflow-hidden flex flex-col"
+            className="relative w-full max-w-6xl h-[94vh] rounded-2xl sm:rounded-3xl overflow-hidden flex flex-col"
             style={{
               background: "linear-gradient(160deg, rgba(20,22,38,0.95), rgba(12,12,12,0.95))",
               border: "1px solid rgba(74,158,255,0.3)",
               boxShadow: "0 30px 80px -20px rgba(74,158,255,0.4)",
             }}
           >
+            {/* Toolbar */}
             <div
               className="flex flex-wrap items-center gap-2 px-3 sm:px-5 py-3 border-b"
               style={{ borderColor: "rgba(215,226,234,0.1)" }}
@@ -152,63 +251,88 @@ export function PdfPreviewModal({ open, url, title, onClose }: PdfPreviewModalPr
                 </div>
               </div>
 
-              <div className="flex items-center gap-1 order-3 sm:order-none w-full sm:w-auto justify-between sm:justify-start">
+              <div className="flex items-center gap-1 order-3 sm:order-none w-full sm:w-auto justify-between sm:justify-start flex-wrap">
+                {/* Zoom */}
                 <div className="flex items-center gap-1">
-                  <button
-                    onClick={() => setZoom((z) => Math.max(0.75, Number((z - 0.25).toFixed(2))))}
-                    className="w-8 h-8 rounded-lg flex items-center justify-center text-[#D7E2EA]/70 hover:text-white hover:bg-white/10"
-                    aria-label="Zoom out"
+                  <ToolbarBtn
+                    onClick={() => {
+                      setFit("custom");
+                      setZoom((z) => Math.max(0.4, +(z - 0.2).toFixed(2)));
+                    }}
+                    ariaLabel="Zoom out"
                   >
                     <ZoomOut className="w-4 h-4" />
-                  </button>
-                  <div className="text-[10px] uppercase tracking-widest text-[#D7E2EA]/60 w-14 text-center">
-                    {Math.round(zoom * 100)}%
+                  </ToolbarBtn>
+                  <div className="text-[10px] uppercase tracking-widest text-[#D7E2EA]/70 w-14 text-center">
+                    {fit === "width"
+                      ? "Fit W"
+                      : fit === "page"
+                      ? "Fit P"
+                      : `${Math.round(zoom * 100)}%`}
                   </div>
-                  <button
-                    onClick={() => setZoom((z) => Math.min(2.5, Number((z + 0.25).toFixed(2))))}
-                    className="w-8 h-8 rounded-lg flex items-center justify-center text-[#D7E2EA]/70 hover:text-white hover:bg-white/10"
-                    aria-label="Zoom in"
+                  <ToolbarBtn
+                    onClick={() => {
+                      setFit("custom");
+                      setZoom((z) => Math.min(3, +(z + 0.2).toFixed(2)));
+                    }}
+                    ariaLabel="Zoom in"
                   >
                     <ZoomIn className="w-4 h-4" />
-                  </button>
+                  </ToolbarBtn>
                 </div>
 
+                {/* Fit modes */}
                 {documentKind === "pdf" && (
-                  <div className="flex items-center gap-1 ml-2 sm:ml-3">
-                    <button
+                  <div className="flex items-center gap-1 ml-2">
+                    <ToolbarBtn
+                      active={fit === "width"}
+                      onClick={() => setFit("width")}
+                      ariaLabel="Fit width"
+                    >
+                      <StretchHorizontal className="w-4 h-4" />
+                    </ToolbarBtn>
+                    <ToolbarBtn
+                      active={fit === "page"}
+                      onClick={() => setFit("page")}
+                      ariaLabel="Fit page"
+                    >
+                      <Move className="w-4 h-4" />
+                    </ToolbarBtn>
+                  </div>
+                )}
+
+                {/* Pagination */}
+                {documentKind === "pdf" && numPages > 0 && (
+                  <div className="flex items-center gap-1 ml-2">
+                    <ToolbarBtn
                       onClick={() => setPageNumber((p) => Math.max(1, p - 1))}
                       disabled={pageNumber <= 1}
-                      className="w-8 h-8 rounded-lg flex items-center justify-center text-[#D7E2EA]/70 hover:text-white hover:bg-white/10 disabled:opacity-30"
-                      aria-label="Previous page"
+                      ariaLabel="Previous page"
                     >
                       <ChevronLeft className="w-4 h-4" />
-                    </button>
-                    <div className="text-[10px] uppercase tracking-widest text-[#D7E2EA]/60 min-w-[84px] text-center">
-                      {`Page ${pageNumber}`}
+                    </ToolbarBtn>
+                    <div className="text-[10px] uppercase tracking-widest text-[#D7E2EA]/70 min-w-[70px] text-center tabular-nums">
+                      {pageNumber} / {numPages}
                     </div>
-                    <button
-                      onClick={() => setPageNumber((p) => p + 1)}
-                      className="w-8 h-8 rounded-lg flex items-center justify-center text-[#D7E2EA]/70 hover:text-white hover:bg-white/10 disabled:opacity-30"
-                      aria-label="Next page"
+                    <ToolbarBtn
+                      onClick={() => setPageNumber((p) => Math.min(numPages, p + 1))}
+                      disabled={pageNumber >= numPages}
+                      ariaLabel="Next page"
                     >
                       <ChevronRight className="w-4 h-4" />
-                    </button>
+                    </ToolbarBtn>
                   </div>
                 )}
               </div>
 
-              <button
-                onClick={fullscreen}
-                className="hidden sm:flex w-8 h-8 rounded-lg items-center justify-center text-[#D7E2EA]/70 hover:text-white hover:bg-white/10"
-                aria-label="Fullscreen"
-              >
-                <Maximize2 className="w-4 h-4" />
-              </button>
+              <ToolbarBtn onClick={toggleFullscreen} ariaLabel="Toggle fullscreen" className="hidden sm:flex">
+                {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+              </ToolbarBtn>
               <a
-                href={previewUrl || "#"}
+                href={normalizedUrl || "#"}
                 target="_blank"
                 rel="noreferrer"
-                className="w-8 h-8 rounded-lg flex items-center justify-center text-[#D7E2EA]/70 hover:text-white hover:bg-white/10"
+                className="w-9 h-9 rounded-lg flex items-center justify-center text-[#D7E2EA]/70 hover:text-white hover:bg-white/10"
                 aria-label="Open in new tab"
               >
                 <ExternalLink className="w-4 h-4" />
@@ -238,9 +362,40 @@ export function PdfPreviewModal({ open, url, title, onClose }: PdfPreviewModalPr
   );
 }
 
+function ToolbarBtn({
+  onClick,
+  disabled,
+  ariaLabel,
+  children,
+  active,
+  className,
+}: {
+  onClick?: () => void;
+  disabled?: boolean;
+  ariaLabel: string;
+  children: React.ReactNode;
+  active?: boolean;
+  className?: string;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      aria-label={ariaLabel}
+      className={`w-9 h-9 rounded-lg flex items-center justify-center transition-colors ${
+        active
+          ? "bg-[#4a9eff]/20 text-white"
+          : "text-[#D7E2EA]/70 hover:text-white hover:bg-white/10"
+      } disabled:opacity-30 disabled:cursor-not-allowed ${className ?? ""}`}
+    >
+      {children}
+    </button>
+  );
+}
+
 function LoadingState({ label, compact = false }: { label: string; compact?: boolean }) {
   return (
-    <div className={`w-full flex items-center justify-center text-[#D7E2EA]/60 ${compact ? "py-12" : "h-full"}`}>
+    <div className={`w-full flex items-center justify-center text-[#D7E2EA]/60 ${compact ? "py-24" : "h-full py-24"}`}>
       <div className="flex items-center gap-3 text-sm">
         <Loader2 className="w-4 h-4 animate-spin" />
         <span>{label}</span>
@@ -255,7 +410,9 @@ function FallbackState({ message, url, title }: { message: string; url?: string;
       <div className="max-w-md rounded-3xl border border-[#D7E2EA]/10 bg-white/5 px-6 py-8 text-center">
         <AlertCircle className="w-8 h-8 mx-auto mb-3 text-[#4a9eff]" />
         <div className="text-sm text-[#D7E2EA]">{message}</div>
-        <div className="text-xs text-[#D7E2EA]/50 mt-2">Try opening it in a new tab or downloading the file.</div>
+        <div className="text-xs text-[#D7E2EA]/50 mt-2">
+          Try opening it in a new tab or downloading the file.
+        </div>
         <div className="mt-4 flex items-center justify-center gap-2">
           {url && (
             <a
@@ -280,26 +437,4 @@ function FallbackState({ message, url, title }: { message: string; url?: string;
       </div>
     </div>
   );
-}
-
-function buildPreviewUrl(rawUrl: string, pageNumber: number, zoom: number) {
-  if (!rawUrl) return "";
-
-  const base = appendPreviewToken(rawUrl);
-  const zoomPercent = Math.round(zoom * 100);
-  return `${base}#page=${Math.max(1, pageNumber)}&zoom=${zoomPercent}&toolbar=0&navpanes=0&scrollbar=1`;
-}
-
-function appendPreviewToken(rawUrl: string) {
-  try {
-    const base = new URL(rawUrl, window.location.origin);
-    const current = new URL(window.location.href);
-    const lovableToken = current.searchParams.get("__lovable_token");
-    if (lovableToken && !base.searchParams.has("__lovable_token")) {
-      base.searchParams.set("__lovable_token", lovableToken);
-    }
-    return base.toString();
-  } catch {
-    return rawUrl;
-  }
 }
