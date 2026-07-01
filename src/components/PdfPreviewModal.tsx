@@ -167,6 +167,10 @@ export function PdfPreviewModal({ open, url, title, onClose }: PdfPreviewModalPr
       );
     }
 
+    if (documentKind === "pdf" && !mounted) {
+      return <LoadingState label="Preparing viewer…" />;
+    }
+
     if (documentKind === "pdf") {
       return (
         <div
