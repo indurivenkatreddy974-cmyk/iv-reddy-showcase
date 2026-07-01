@@ -28,7 +28,9 @@ import {
   triggerDocumentDownload,
 } from "@/lib/document-utils";
 
-pdfjs.GlobalWorkerOptions.workerSrc = pdfjsWorker;
+if (typeof window !== "undefined") {
+  pdfjs.GlobalWorkerOptions.workerSrc = pdfjsWorker;
+}
 
 export type PdfPreviewModalProps = {
   open: boolean;
