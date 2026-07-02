@@ -111,7 +111,7 @@ function InternshipCard({
               <Eye className="w-3.5 h-3.5" /> View Certificate
             </button>
             <button
-              onClick={() => triggerDocumentDownload(certificateUrl, `${item.company} Certificate`)}
+              onClick={() => void triggerDocumentDownload(certificateUrl, `${item.company} Completion Certificate`)}
               className="flex items-center gap-2 text-[11px] uppercase tracking-widest px-4 py-2.5 rounded-full border border-[#D7E2EA]/20 text-[#D7E2EA]/85 hover:text-white hover:border-[#4a9eff]/50 transition"
             >
               <Download className="w-3.5 h-3.5" /> Download Certificate
@@ -127,7 +127,7 @@ function InternshipCard({
               <FileSignature className="w-3.5 h-3.5" /> View Offer Letter
             </button>
             <button
-              onClick={() => triggerDocumentDownload(offerLetterUrl, `${item.company} Offer Letter`)}
+              onClick={() => void triggerDocumentDownload(offerLetterUrl, `${item.company} Offer Letter`)}
               className="flex items-center gap-2 text-[11px] uppercase tracking-widest px-4 py-2.5 rounded-full border border-[#D7E2EA]/20 text-[#D7E2EA]/85 hover:text-white hover:border-[#4a9eff]/50 transition"
             >
               <Download className="w-3.5 h-3.5" /> Download Offer Letter
