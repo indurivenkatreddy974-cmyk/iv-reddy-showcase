@@ -90,18 +90,39 @@ export function getDownloadUrl(rawUrl?: string | null, title?: string) {
   }
 }
 
-export function triggerDocumentDownload(rawUrl?: string | null, title?: string) {
-  const normalized = normalizeUrl(rawUrl);
-  if (!normalized || typeof document === "undefined") return false;
-
+function anchorDownload(href: string, filename: string) {
   const link = document.createElement("a");
-  link.href = getDownloadUrl(normalized, title);
+  link.href = href;
   link.rel = "noreferrer";
-  link.download = getDocumentFilename(normalized, title);
+  link.download = filename;
+  link.style.display = "none";
   document.body.appendChild(link);
   link.click();
   link.remove();
-  return true;
+}
+
+export async function triggerDocumentDownload(rawUrl?: string | null, title?: string) {
+  const normalized = normalizeUrl(rawUrl);
+  if (!normalized || typeof document === "undefined") return false;
+
+  const filename = getDocumentFilename(normalized, title);
+  const href = getDownloadUrl(normalized, title);
+
+  // Fetch as blob so the browser always downloads (never navigates to Lovable / another tab).
+  try {
+    const res = await fetch(href, { credentials: "omit", cache: "force-cache" });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const blob = await res.blob();
+    const typedBlob = blob.type ? blob : new Blob([blob], { type: "application/pdf" });
+    const objectUrl = URL.createObjectURL(typedBlob);
+    anchorDownload(objectUrl, filename);
+    setTimeout(() => URL.revokeObjectURL(objectUrl), 4000);
+    return true;
+  } catch (err) {
+    console.warn("[download] blob fetch failed, using anchor fallback", err);
+    anchorDownload(href, filename);
+    return true;
+  }
 }
 
 export function openVerifiedLink(rawUrl?: string | null) {
