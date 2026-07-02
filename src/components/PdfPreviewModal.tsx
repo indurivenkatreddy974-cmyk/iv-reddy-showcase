@@ -127,9 +127,7 @@ export function PdfPreviewModal({ open, url, title, onClose }: PdfPreviewModalPr
   };
 
   const handleDownload = useCallback(() => {
-    if (!triggerDocumentDownload(normalizedUrl, title)) {
-      setLoadError("Document unavailable");
-    }
+    void triggerDocumentDownload(normalizedUrl, title);
   }, [normalizedUrl, title]);
 
   const documentFile = useMemo(
