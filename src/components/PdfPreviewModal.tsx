@@ -127,9 +127,7 @@ export function PdfPreviewModal({ open, url, title, onClose }: PdfPreviewModalPr
   };
 
   const handleDownload = useCallback(() => {
-    if (!triggerDocumentDownload(normalizedUrl, title)) {
-      setLoadError("Document unavailable");
-    }
+    void triggerDocumentDownload(normalizedUrl, title);
   }, [normalizedUrl, title]);
 
   const documentFile = useMemo(
@@ -417,7 +415,7 @@ function FallbackState({ message, url, title }: { message: string; url?: string;
           )}
           {url && (
             <button
-              onClick={() => triggerDocumentDownload(url, title)}
+              onClick={() => void triggerDocumentDownload(url, title)}
               className="flex items-center gap-2 text-[11px] uppercase tracking-widest px-4 py-2 rounded-full border border-[#D7E2EA]/20 text-[#D7E2EA]/85"
             >
               <Download className="w-3.5 h-3.5" /> Download
