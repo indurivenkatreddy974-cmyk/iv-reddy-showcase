@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   AlertCircle,
@@ -17,10 +17,6 @@ import {
   ZoomIn,
   ZoomOut,
 } from "lucide-react";
-import { Document, Page, pdfjs } from "react-pdf";
-import pdfjsWorker from "pdfjs-dist/build/pdf.worker.min.mjs?url";
-import "react-pdf/dist/Page/AnnotationLayer.css";
-import "react-pdf/dist/Page/TextLayer.css";
 import {
   getDocumentFilename,
   getDocumentKind,
@@ -28,9 +24,7 @@ import {
   triggerDocumentDownload,
 } from "@/lib/document-utils";
 
-if (typeof window !== "undefined") {
-  pdfjs.GlobalWorkerOptions.workerSrc = pdfjsWorker;
-}
+const PdfCanvas = lazy(() => import("./PdfCanvas"));
 
 export type PdfPreviewModalProps = {
   open: boolean;
