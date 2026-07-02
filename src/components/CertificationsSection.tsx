@@ -151,7 +151,7 @@ function CertCard({
           )}
           {documentUrl && (
             <button
-              onClick={() => triggerDocumentDownload(documentUrl, `${cert.name} ${cert.issuer}`)}
+              onClick={() => void triggerDocumentDownload(documentUrl, `${cert.name} ${cert.issuer}`)}
               className="flex items-center justify-center gap-2 text-[11px] uppercase tracking-widest px-4 py-2.5 rounded-full border border-[#D7E2EA]/20 text-[#D7E2EA]/85 hover:text-white hover:border-[#4a9eff]/50 transition"
               title="Download"
             >
