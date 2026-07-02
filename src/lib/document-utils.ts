@@ -47,13 +47,20 @@ export function normalizeExternalUrl(raw?: string | null): string | null {
 function slugify(value: string) {
   return value
     .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "") || "document";
+    .replace(/[^\w\s.-]+/g, "")
+    .replace(/\s+/g, "_")
+    .replace(/_+/g, "_")
+    .replace(/^[_-]+|[_-]+$/g, "") || "document";
 }
 
 export function getDocumentFilename(rawUrl?: string | null, title?: string) {
   const normalized = normalizeUrl(rawUrl);
+  const ext = getDocumentKind(normalized) === "image" ? ".jpg" : ".pdf";
+
+  if (title && title.trim()) {
+    const base = slugify(title);
+    return base.toLowerCase().endsWith(ext) ? base : `${base}${ext}`;
+  }
 
   try {
     const pathname = new URL(
@@ -66,8 +73,7 @@ export function getDocumentFilename(rawUrl?: string | null, title?: string) {
     // ignore and fall back
   }
 
-  const ext = getDocumentKind(normalized) === "image" ? ".jpg" : ".pdf";
-  return `${slugify(title ?? "document")}${ext}`;
+  return `document${ext}`;
 }
 
 export function getDownloadUrl(rawUrl?: string | null, title?: string) {
