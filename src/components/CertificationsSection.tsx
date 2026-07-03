@@ -67,6 +67,8 @@ function CertCard({
   const verificationUrl = normalizeExternalUrl(cert.verifyUrl);
   const documentKind = getDocumentKind(documentUrl);
   const canPreviewDocument = documentKind === "pdf" || documentKind === "image";
+  const [pageCount, setPageCount] = useState<number | null>(null);
+  const [thumbFailed, setThumbFailed] = useState(false);
 
   const handleVerify = () => {
     if (verificationUrl) {
@@ -107,6 +109,24 @@ function CertCard({
             loading="lazy"
             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
           />
+        ) : documentKind === "image" && documentUrl ? (
+          <img
+            src={documentUrl}
+            alt={cert.name}
+            loading="lazy"
+            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+          />
+        ) : documentKind === "pdf" && documentUrl && !thumbFailed ? (
+          <div className="absolute inset-0 overflow-hidden bg-white transition-transform duration-700 group-hover:scale-105">
+            <Suspense fallback={<div className="w-full h-full bg-white/5" />}>
+              <PdfThumbnail
+                url={documentUrl}
+                width={520}
+                onPages={setPageCount}
+                onError={() => setThumbFailed(true)}
+              />
+            </Suspense>
+          </div>
         ) : (
           <div
             className="w-full h-full flex items-center justify-center"
@@ -118,8 +138,19 @@ function CertCard({
             <FileText className="w-20 h-20 text-[#D7E2EA]/30 transition-transform duration-500 group-hover:scale-110" />
           </div>
         )}
+
+        {/* Page indicator */}
+        {documentKind === "pdf" && pageCount && (
+          <div
+            className="absolute top-3 left-3 text-[10px] uppercase tracking-widest text-white px-2.5 py-1 rounded-full"
+            style={{ background: "rgba(0,0,0,0.55)", backdropFilter: "blur(8px)", border: "1px solid rgba(255,255,255,0.12)" }}
+          >
+            Page 1 of {pageCount}
+          </div>
+        )}
+
         <div
-          className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center"
+          className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center pointer-events-none"
           style={{ background: "linear-gradient(180deg, transparent, rgba(0,0,0,0.7))" }}
         >
           <div className="flex items-center gap-2 text-xs uppercase tracking-widest text-white px-4 py-2 rounded-full" style={{ background: "rgba(74,158,255,0.25)", backdropFilter: "blur(10px)" }}>
@@ -127,6 +158,7 @@ function CertCard({
           </div>
         </div>
       </div>
+
 
       <div className="p-6 flex flex-col gap-3 flex-1">
         <div className="flex items-center gap-2">
