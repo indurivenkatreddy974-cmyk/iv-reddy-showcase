@@ -1,10 +1,12 @@
 "use client";
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
 import { motion } from "framer-motion";
 import { FadeIn } from "./FadeIn";
 import { useContent, type Certification } from "@/lib/content-store";
 import { Award, Download, Eye, ExternalLink, FileText } from "lucide-react";
 import { PdfPreviewModal } from "./PdfPreviewModal";
+
+const PdfThumbnail = lazy(() => import("./PdfThumbnail"));
 import {
   getDocumentKind,
   normalizeExternalUrl,
