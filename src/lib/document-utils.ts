@@ -114,9 +114,9 @@ export async function triggerDocumentDownload(rawUrl?: string | null, title?: st
   const filename = getDocumentFilename(normalized, title);
   const href = getDownloadUrl(normalized, title);
 
-  // Fetch as blob so the browser always downloads (never navigates to Lovable / another tab).
+  // Fetch as blob so the browser always downloads (never navigates the page).
   try {
-    const res = await fetch(href, { credentials: "omit", cache: "force-cache" });
+    const res = await fetch(href, { credentials: "omit" });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const blob = await res.blob();
     const typedBlob = blob.type ? blob : new Blob([blob], { type: "application/pdf" });
@@ -125,9 +125,12 @@ export async function triggerDocumentDownload(rawUrl?: string | null, title?: st
     setTimeout(() => URL.revokeObjectURL(objectUrl), 4000);
     return true;
   } catch (err) {
-    console.warn("[download] blob fetch failed, using anchor fallback", err);
-    anchorDownload(href, filename);
-    return true;
+    console.warn("[download] blob fetch failed", err);
+    // Last-resort: open in a new tab so we never navigate the current app away.
+    if (typeof window !== "undefined") {
+      window.open(href, "_blank", "noopener,noreferrer");
+    }
+    return false;
   }
 }
 
