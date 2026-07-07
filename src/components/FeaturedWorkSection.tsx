@@ -342,10 +342,10 @@ function VideoModal({ open, onClose, url, title }: { open: boolean; onClose: () 
           <div className="absolute inset-0" style={{ background: "rgba(0,0,0,0.92)", backdropFilter: "blur(20px)" }} onClick={onClose} />
           <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="relative w-full max-w-5xl rounded-2xl overflow-hidden" style={{ border: "1px solid rgba(74,158,255,0.3)" }}>
             <video ref={videoRef} src={url} controls className="w-full h-auto" />
-            <button onClick={onClose} className="absolute top-3 right-3 w-9 h-9 rounded-full flex items-center justify-center bg-black/60 text-white hover:bg-black/80">
+            <button type="button" aria-label="Close video" onClick={onClose} className="absolute top-3 right-3 w-9 h-9 rounded-full flex items-center justify-center bg-black/60 text-white hover:bg-black/80">
               <X className="w-4 h-4" />
             </button>
-            <button onClick={() => videoRef.current?.requestFullscreen()} className="absolute top-3 right-14 w-9 h-9 rounded-full flex items-center justify-center bg-black/60 text-white hover:bg-black/80">
+            <button type="button" aria-label="Enter fullscreen" onClick={() => videoRef.current?.requestFullscreen()} className="absolute top-3 right-14 w-9 h-9 rounded-full flex items-center justify-center bg-black/60 text-white hover:bg-black/80">
               <Maximize2 className="w-4 h-4" />
             </button>
             <div className="absolute bottom-3 left-4 text-sm text-white/80">{title}</div>

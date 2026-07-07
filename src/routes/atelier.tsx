@@ -8,7 +8,15 @@ import { unlockAdminPortal, useAdminAuth } from "@/lib/admin-auth";
 export const Route = createFileRoute("/atelier")({
   ssr: false,
   head: () => ({
-    meta: [{ title: "—" }, { name: "robots", content: "noindex, nofollow" }],
+    meta: [
+      { title: "Sign In — IV Reddy Atelier" },
+      {
+        name: "description",
+        content:
+          "Private admin portal for IV Reddy's portfolio. Sign in to manage showcase items, media, and site content.",
+      },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
   }),
   component: AtelierPage,
 });
