@@ -99,7 +99,7 @@ function ProjectCard({
             <div className="sm:col-span-2 flex flex-col gap-3 sm:gap-4 md:gap-5">
               <img
                 src={project.imgs[0]}
-                alt=""
+                alt={`${project.name} — preview 1`}
                 className="w-full rounded-[40px] sm:rounded-[50px] md:rounded-[60px] object-cover"
                 style={{ height: "clamp(130px, 16vw, 230px)" }}
                 loading="lazy"
@@ -108,6 +108,7 @@ function ProjectCard({
                 <video
                   src={project.videoUrl}
                   poster={project.posterUrl || project.imgs[1]}
+                  aria-label={`${project.name} demo video`}
                   className="w-full rounded-[40px] sm:rounded-[50px] md:rounded-[60px] object-cover"
                   style={{ height: "clamp(160px, 22vw, 340px)" }}
                   controls
@@ -117,7 +118,7 @@ function ProjectCard({
               ) : (
                 <img
                   src={project.imgs[1]}
-                  alt=""
+                  alt={`${project.name} — preview 2`}
                   className="w-full rounded-[40px] sm:rounded-[50px] md:rounded-[60px] object-cover"
                   style={{ height: "clamp(160px, 22vw, 340px)" }}
                   loading="lazy"
@@ -127,7 +128,7 @@ function ProjectCard({
             <div className="sm:col-span-3">
               <img
                 src={project.imgs[2]}
-                alt=""
+                alt={`${project.name} — feature screenshot`}
                 className="w-full h-full rounded-[40px] sm:rounded-[50px] md:rounded-[60px] object-cover"
                 style={{ minHeight: "clamp(310px, 40vw, 590px)" }}
                 loading="lazy"

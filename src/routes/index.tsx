@@ -30,9 +30,40 @@ export const Route = createFileRoute("/")({
           "Cinematic portfolio of Induri Venkata Reddy — Full Stack Developer, designer, and digital craftsman.",
       },
       { property: "og:type", content: "website" },
-      { property: "og:url", content: "/" },
+      { property: "og:url", content: "https://iv-reddy-showcase.lovable.app/" },
+      {
+        property: "og:image",
+        content:
+          "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/13c79881-0d7d-4c13-b083-6cb0f161c5c2/id-preview-1eeb2ff5--863a0b65-556e-4116-b638-b9de484aab87.lovable.app-1783088000097.png",
+      },
+      { name: "twitter:title", content: "IV Reddy — Full Stack Developer" },
+      {
+        name: "twitter:description",
+        content:
+          "Cinematic portfolio of Induri Venkata Reddy — Full Stack Developer, designer, and digital craftsman.",
+      },
+      {
+        name: "twitter:image",
+        content:
+          "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/13c79881-0d7d-4c13-b083-6cb0f161c5c2/id-preview-1eeb2ff5--863a0b65-556e-4116-b638-b9de484aab87.lovable.app-1783088000097.png",
+      },
     ],
-    links: [{ rel: "canonical", href: "/" }],
+    links: [{ rel: "canonical", href: "https://iv-reddy-showcase.lovable.app/" }],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "Person",
+          name: "Induri Venkata Reddy",
+          alternateName: "IV Reddy",
+          jobTitle: "Full Stack Developer",
+          url: "https://iv-reddy-showcase.lovable.app/",
+          description:
+            "Full Stack Developer crafting cinematic digital experiences, scalable products, and meaningful web solutions.",
+        }),
+      },
+    ],
   }),
   component: Index,
 });
