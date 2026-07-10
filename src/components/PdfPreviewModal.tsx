@@ -51,6 +51,45 @@ export function PdfPreviewModal({ open, url, title, onClose }: PdfPreviewModalPr
 
   const wrapRef = useRef<HTMLDivElement>(null);
   const viewportRef = useRef<HTMLDivElement>(null);
+  const closeBtnRef = useRef<HTMLButtonElement>(null);
+  const previouslyFocusedRef = useRef<HTMLElement | null>(null);
+
+  // Focus management: move focus into modal on open, restore on close
+  useEffect(() => {
+    if (!open) return;
+    previouslyFocusedRef.current = document.activeElement as HTMLElement | null;
+    const t = window.setTimeout(() => closeBtnRef.current?.focus(), 50);
+    return () => {
+      window.clearTimeout(t);
+      previouslyFocusedRef.current?.focus?.();
+    };
+  }, [open]);
+
+  // Focus trap within the modal
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Tab") return;
+      const root = wrapRef.current;
+      if (!root) return;
+      const focusables = root.querySelectorAll<HTMLElement>(
+        'a[href], button:not([disabled]), input, select, textarea, [tabindex]:not([tabindex="-1"])',
+      );
+      if (focusables.length === 0) return;
+      const first = focusables[0];
+      const last = focusables[focusables.length - 1];
+      const active = document.activeElement as HTMLElement | null;
+      if (e.shiftKey && active === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && active === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open]);
 
   const normalizedUrl = useMemo(() => normalizeUrl(url), [url]);
   const documentKind = useMemo(() => getDocumentKind(normalizedUrl), [normalizedUrl]);
@@ -216,6 +255,9 @@ export function PdfPreviewModal({ open, url, title, onClose }: PdfPreviewModalPr
           />
           <motion.div
             ref={wrapRef}
+            role="dialog"
+            aria-modal="true"
+            aria-label={title ?? "Document preview"}
             initial={{ scale: 0.96, y: 24, opacity: 0 }}
             animate={{ scale: 1, y: 0, opacity: 1 }}
             exit={{ scale: 0.96, opacity: 0 }}
@@ -320,22 +362,26 @@ export function PdfPreviewModal({ open, url, title, onClose }: PdfPreviewModalPr
                 href={normalizedUrl || "#"}
                 target="_blank"
                 rel="noreferrer"
-                className="w-9 h-9 rounded-lg flex items-center justify-center text-[#D7E2EA]/70 hover:text-white hover:bg-white/10"
+                className="w-9 h-9 rounded-lg flex items-center justify-center text-[#D7E2EA]/70 hover:text-white hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4a9eff] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0C0C0C]"
                 aria-label="Open in new tab"
               >
                 <ExternalLink className="w-4 h-4" />
               </a>
               <button
+                type="button"
                 onClick={handleDownload}
-                className="flex items-center gap-1.5 text-[10px] sm:text-xs uppercase tracking-widest px-3 py-2 rounded-full text-white"
+                aria-label="Download document"
+                className="flex items-center gap-1.5 text-[10px] sm:text-xs uppercase tracking-widest px-3 py-2 rounded-full text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4a9eff] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0C0C0C]"
                 style={{ background: "linear-gradient(135deg, #4a9eff, #7621B0)" }}
               >
                 <Download className="w-3.5 h-3.5" />
                 <span>Download</span>
               </button>
               <button
+                ref={closeBtnRef}
+                type="button"
                 onClick={onClose}
-                className="w-9 h-9 rounded-full flex items-center justify-center text-[#D7E2EA]/70 hover:text-white hover:bg-white/10"
+                className="w-9 h-9 rounded-full flex items-center justify-center text-[#D7E2EA]/70 hover:text-white hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4a9eff] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0C0C0C]"
                 aria-label="Close"
               >
                 <X className="w-4 h-4" />
@@ -367,10 +413,11 @@ function ToolbarBtn({
 }) {
   return (
     <button
+      type="button"
       onClick={onClick}
       disabled={disabled}
       aria-label={ariaLabel}
-      className={`w-9 h-9 rounded-lg flex items-center justify-center transition-colors ${
+      className={`w-9 h-9 rounded-lg flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4a9eff] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0C0C0C] ${
         active
           ? "bg-[#4a9eff]/20 text-white"
           : "text-[#D7E2EA]/70 hover:text-white hover:bg-white/10"
