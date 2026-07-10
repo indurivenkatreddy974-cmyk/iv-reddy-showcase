@@ -362,22 +362,26 @@ export function PdfPreviewModal({ open, url, title, onClose }: PdfPreviewModalPr
                 href={normalizedUrl || "#"}
                 target="_blank"
                 rel="noreferrer"
-                className="w-9 h-9 rounded-lg flex items-center justify-center text-[#D7E2EA]/70 hover:text-white hover:bg-white/10"
+                className="w-9 h-9 rounded-lg flex items-center justify-center text-[#D7E2EA]/70 hover:text-white hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4a9eff] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0C0C0C]"
                 aria-label="Open in new tab"
               >
                 <ExternalLink className="w-4 h-4" />
               </a>
               <button
+                type="button"
                 onClick={handleDownload}
-                className="flex items-center gap-1.5 text-[10px] sm:text-xs uppercase tracking-widest px-3 py-2 rounded-full text-white"
+                aria-label="Download document"
+                className="flex items-center gap-1.5 text-[10px] sm:text-xs uppercase tracking-widest px-3 py-2 rounded-full text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4a9eff] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0C0C0C]"
                 style={{ background: "linear-gradient(135deg, #4a9eff, #7621B0)" }}
               >
                 <Download className="w-3.5 h-3.5" />
                 <span>Download</span>
               </button>
               <button
+                ref={closeBtnRef}
+                type="button"
                 onClick={onClose}
-                className="w-9 h-9 rounded-full flex items-center justify-center text-[#D7E2EA]/70 hover:text-white hover:bg-white/10"
+                className="w-9 h-9 rounded-full flex items-center justify-center text-[#D7E2EA]/70 hover:text-white hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4a9eff] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0C0C0C]"
                 aria-label="Close"
               >
                 <X className="w-4 h-4" />
