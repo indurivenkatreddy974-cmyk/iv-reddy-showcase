@@ -413,10 +413,11 @@ function ToolbarBtn({
 }) {
   return (
     <button
+      type="button"
       onClick={onClick}
       disabled={disabled}
       aria-label={ariaLabel}
-      className={`w-9 h-9 rounded-lg flex items-center justify-center transition-colors ${
+      className={`w-9 h-9 rounded-lg flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4a9eff] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0C0C0C] ${
         active
           ? "bg-[#4a9eff]/20 text-white"
           : "text-[#D7E2EA]/70 hover:text-white hover:bg-white/10"
