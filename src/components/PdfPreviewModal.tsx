@@ -255,6 +255,9 @@ export function PdfPreviewModal({ open, url, title, onClose }: PdfPreviewModalPr
           />
           <motion.div
             ref={wrapRef}
+            role="dialog"
+            aria-modal="true"
+            aria-label={title ?? "Document preview"}
             initial={{ scale: 0.96, y: 24, opacity: 0 }}
             animate={{ scale: 1, y: 0, opacity: 1 }}
             exit={{ scale: 0.96, opacity: 0 }}
