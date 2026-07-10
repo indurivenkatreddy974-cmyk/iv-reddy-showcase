@@ -164,13 +164,14 @@ export function ChatPanel({
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder={PLACEHOLDERS[phIdx]}
-              className="flex-1 bg-transparent text-sm text-[#D7E2EA] placeholder:text-[#D7E2EA]/40 px-4 py-3 rounded-full focus:outline-none border"
+              aria-label="Message"
+              className="flex-1 bg-transparent text-sm text-[#D7E2EA] placeholder:text-[#D7E2EA]/40 px-4 py-3 rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-[#4a9eff] border"
               style={{ borderColor: "rgba(215,226,234,0.15)" }}
             />
             <button
               type="submit"
-              aria-label="Send"
-              className="w-10 h-10 rounded-full flex items-center justify-center transition hover:scale-105"
+              aria-label="Send message"
+              className="w-10 h-10 rounded-full flex items-center justify-center transition hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4a9eff] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0C0C0C]"
               style={{
                 background: "linear-gradient(135deg, #4a9eff, #7621B0)",
                 boxShadow: "0 8px 24px -6px rgba(74,158,255,0.5)",
