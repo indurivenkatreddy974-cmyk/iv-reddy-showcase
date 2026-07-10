@@ -41,9 +41,11 @@ export function ChatOrb() {
         >
           <motion.button
             ref={orbRef}
+            type="button"
             onClick={() => setOpen((o) => !o)}
             aria-label={open ? "Close assistant" : "Open assistant"}
-            className="relative rounded-full flex items-center justify-center group"
+            aria-expanded={open}
+            className="relative rounded-full flex items-center justify-center group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4a9eff] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0C0C0C]"
             style={{
               width: "clamp(58px, 6vw, 76px)",
               height: "clamp(58px, 6vw, 76px)",
