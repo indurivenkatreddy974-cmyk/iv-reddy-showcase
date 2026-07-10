@@ -51,6 +51,45 @@ export function PdfPreviewModal({ open, url, title, onClose }: PdfPreviewModalPr
 
   const wrapRef = useRef<HTMLDivElement>(null);
   const viewportRef = useRef<HTMLDivElement>(null);
+  const closeBtnRef = useRef<HTMLButtonElement>(null);
+  const previouslyFocusedRef = useRef<HTMLElement | null>(null);
+
+  // Focus management: move focus into modal on open, restore on close
+  useEffect(() => {
+    if (!open) return;
+    previouslyFocusedRef.current = document.activeElement as HTMLElement | null;
+    const t = window.setTimeout(() => closeBtnRef.current?.focus(), 50);
+    return () => {
+      window.clearTimeout(t);
+      previouslyFocusedRef.current?.focus?.();
+    };
+  }, [open]);
+
+  // Focus trap within the modal
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Tab") return;
+      const root = wrapRef.current;
+      if (!root) return;
+      const focusables = root.querySelectorAll<HTMLElement>(
+        'a[href], button:not([disabled]), input, select, textarea, [tabindex]:not([tabindex="-1"])',
+      );
+      if (focusables.length === 0) return;
+      const first = focusables[0];
+      const last = focusables[focusables.length - 1];
+      const active = document.activeElement as HTMLElement | null;
+      if (e.shiftKey && active === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && active === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open]);
 
   const normalizedUrl = useMemo(() => normalizeUrl(url), [url]);
   const documentKind = useMemo(() => getDocumentKind(normalizedUrl), [normalizedUrl]);
