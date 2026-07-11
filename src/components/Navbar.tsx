@@ -119,6 +119,10 @@ export function Navbar() {
       <AnimatePresence>
         {open && (
           <motion.div
+            id="mobile-nav-menu"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Navigation menu"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -133,9 +137,10 @@ export function Navbar() {
           >
             <div className="flex items-center justify-end px-6 pt-6">
               <button
+                type="button"
                 onClick={() => setOpen(false)}
                 aria-label="Close menu"
-                className="inline-flex items-center justify-center w-12 h-12 rounded-full text-[#CBD5E1] hover:text-white border border-white/10"
+                className="inline-flex items-center justify-center w-12 h-12 rounded-full text-[#CBD5E1] hover:text-white border border-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#60A5FA]"
               >
                 <X size={22} />
               </button>
@@ -157,7 +162,8 @@ export function Navbar() {
                   <a
                     href={`#${SECTION_IDS[item]}`}
                     onClick={() => setOpen(false)}
-                    className="block w-full text-center py-4 rounded-2xl text-lg font-medium tracking-[0.22em] uppercase border border-white/[0.06] hover:border-white/20 transition-colors"
+                    aria-current={active === item ? "page" : undefined}
+                    className="block w-full text-center py-4 rounded-2xl text-lg font-medium tracking-[0.22em] uppercase border border-white/[0.06] hover:border-white/20 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#60A5FA]"
                     style={{ color: active === item ? "#60A5FA" : "#CBD5E1" }}
                   >
                     {item}
