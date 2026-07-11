@@ -1,9 +1,6 @@
 import { create } from "zustand";
 import { supabase } from "@/integrations/supabase/client";
 
-const PORTAL_EMAIL = "reddy.admin@portfolio.local";
-const PORTAL_PASSWORD = "Venkatreddy60@";
-
 type AuthState = {
   authed: boolean;
   isAdmin: boolean;
@@ -49,7 +46,6 @@ export const useAdminAuth = create<AuthState>((set, get) => ({
       const { data, error } = await supabase.auth.getUser();
 
       if (error) {
-        console.error("Failed to load admin user", error.message);
         set({ authed: false, isAdmin: false, userId: null, email: null, loading: false });
         return;
       }
@@ -98,51 +94,6 @@ export const useAdminAuth = create<AuthState>((set, get) => ({
     return { ok: true };
   },
 }));
-
-export async function unlockAdminPortal(
-  password: string,
-): Promise<{ ok: boolean; error?: string }> {
-  if (password !== PORTAL_PASSWORD) {
-    return { ok: false, error: "Incorrect password" };
-  }
-
-  const { signIn, signUp, claimAdmin, refresh } = useAdminAuth.getState();
-
-  let result = await signIn(PORTAL_EMAIL, PORTAL_PASSWORD);
-
-  if (result.error) {
-    const created = await signUp(PORTAL_EMAIL, PORTAL_PASSWORD);
-    if (created.error && !/registered|already/i.test(created.error)) {
-      return { ok: false, error: "Unable to unlock portal" };
-    }
-
-    result = await signIn(PORTAL_EMAIL, PORTAL_PASSWORD);
-    if (result.error) {
-      return { ok: false, error: "Unable to unlock portal" };
-    }
-  }
-
-  const { data: adminExists, error: adminCheckError } = await supabase.rpc("admin_exists");
-  if (adminCheckError) {
-    return { ok: false, error: adminCheckError.message };
-  }
-
-  if (!adminExists) {
-    const claim = await claimAdmin();
-    if (!claim.ok) {
-      return { ok: false, error: claim.error ?? "Unable to grant admin access" };
-    }
-  }
-
-  await refresh();
-
-  const state = useAdminAuth.getState();
-  if (!state.authed || !state.isAdmin) {
-    return { ok: false, error: "Admin access is not ready yet" };
-  }
-
-  return { ok: true };
-}
 
 // Subscribe to auth changes once (client-only)
 if (typeof window !== "undefined") {

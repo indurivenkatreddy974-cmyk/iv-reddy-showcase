@@ -3,7 +3,8 @@ import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { Lock, LogIn } from "lucide-react";
 import { AdminShell } from "@/components/admin/AdminShell";
-import { unlockAdminPortal, useAdminAuth } from "@/lib/admin-auth";
+import { useAdminAuth } from "@/lib/admin-auth";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/atelier")({
   ssr: false,
@@ -20,8 +21,6 @@ export const Route = createFileRoute("/atelier")({
   }),
   component: AtelierPage,
 });
-
-const REQUIRED_PASSWORD = "Venkatreddy60@";
 
 function AtelierPage() {
   const { authed, isAdmin, loading } = useAdminAuth();
@@ -42,38 +41,43 @@ function AtelierPage() {
 }
 
 function AuthGate() {
+  const { signIn, refresh, claimAdmin } = useAdminAuth();
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const emailRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    inputRef.current?.focus();
+    emailRef.current?.focus();
   }, []);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-
-    if (password !== REQUIRED_PASSWORD) {
-      setError("Incorrect password");
-      inputRef.current?.focus();
-      inputRef.current?.select();
-      return;
-    }
-
     setBusy(true);
     try {
-      const result = await unlockAdminPortal(password);
-      if (!result.ok) {
-        setError(result.error ?? "Access denied");
-        inputRef.current?.focus();
-        inputRef.current?.select();
+      const result = await signIn(email, password);
+      if (result.error) {
+        setError(result.error);
+        return;
       }
+      // If no admin exists yet, allow the first authenticated user to claim.
+      const { data: adminExists, error: adminCheckError } = await supabase.rpc("admin_exists");
+      if (adminCheckError) {
+        setError(adminCheckError.message);
+        return;
+      }
+      if (!adminExists) {
+        const claim = await claimAdmin();
+        if (!claim.ok) {
+          setError(claim.error ?? "Unable to grant admin access");
+          return;
+        }
+      }
+      await refresh();
     } catch {
-      setError("Access denied");
-      inputRef.current?.focus();
-      inputRef.current?.select();
+      setError("Sign in failed");
     } finally {
       setBusy(false);
     }
@@ -109,19 +113,31 @@ function AuthGate() {
         </div>
 
         <p className="text-sm leading-relaxed text-[#D7E2EA]/65">
-          Enter the portal password to open the secret admin panel instantly.
+          Sign in with your admin account credentials.
         </p>
 
         <div className="flex flex-col gap-3">
+          <label className="flex flex-col gap-1.5">
+            <span className="text-[10px] uppercase tracking-[0.3em] text-[#D7E2EA]/60">Email</span>
+            <input
+              ref={emailRef}
+              type="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              autoComplete="email"
+              placeholder="you@example.com"
+              className="bg-transparent text-[#D7E2EA] placeholder:text-[#D7E2EA]/30 px-4 py-3 rounded-xl focus:outline-none border"
+              style={{ borderColor: "rgba(215,226,234,0.18)" }}
+            />
+          </label>
           <label className="flex flex-col gap-1.5">
             <span className="text-[10px] uppercase tracking-[0.3em] text-[#D7E2EA]/60">
               Password
             </span>
             <input
-              ref={inputRef}
               type="password"
               required
-              autoFocus
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               autoComplete="current-password"
