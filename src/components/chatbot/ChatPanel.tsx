@@ -194,12 +194,13 @@ export function ChatPanel({
           </div>
 
           {/* chips */}
-          <div className="px-4 pb-2 flex flex-wrap gap-2">
+          <div className="px-4 pb-2 flex flex-wrap gap-2" role="group" aria-label="Quick actions">
             {QUICK_CHIPS.map((c) => (
               <button
+                type="button"
                 key={c.label}
                 onClick={() => handleChip(c.href, c.label)}
-                className="text-[11px] uppercase tracking-widest px-3 py-1.5 rounded-full border transition hover:bg-[#D7E2EA]/10"
+                className="text-[11px] uppercase tracking-widest px-3 py-1.5 rounded-full border transition hover:bg-[#D7E2EA]/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4a9eff] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0C0C0C]"
                 style={{ borderColor: "rgba(215,226,234,0.2)", color: "#D7E2EA" }}
               >
                 {c.label}
