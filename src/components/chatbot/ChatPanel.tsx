@@ -167,7 +167,7 @@ export function ChatPanel({
           </div>
 
           {/* messages */}
-          <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-3">
+          <div ref={scrollRef} role="log" aria-label="Chat messages" aria-live="polite" className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-3">
             {messages.map((m) => (
               <motion.div
                 key={m.id}
