@@ -136,6 +136,10 @@ export function ChatPanel({
       {open && (
         <motion.div
           key="panel"
+          ref={panelRef}
+          role="dialog"
+          aria-modal="false"
+          aria-label="IV Assistant chat"
           initial={{ opacity: 0, scale: 0.85, y: 30, filter: "blur(20px)" }}
           animate={{ opacity: 1, scale: 1, y: 0, filter: "blur(0px)" }}
           exit={{ opacity: 0, scale: 0.9, y: 20, filter: "blur(20px)" }}
@@ -152,9 +156,14 @@ export function ChatPanel({
           {/* header */}
           <div className="px-5 py-4 border-b" style={{ borderColor: "rgba(215,226,234,0.08)" }}>
             <div className="flex items-center gap-3">
-              <span className="w-2 h-2 rounded-full" style={{ background: "#4a9eff", boxShadow: "0 0 10px #4a9eff" }} />
+              <span className="w-2 h-2 rounded-full" style={{ background: "#4a9eff", boxShadow: "0 0 10px #4a9eff" }} aria-hidden />
               <div className="text-xs uppercase tracking-[0.3em] text-[#D7E2EA]/80">IV · Assistant</div>
             </div>
+          </div>
+
+          {/* live region for screen readers */}
+          <div role="status" aria-live="polite" aria-atomic="true" className="sr-only">
+            {lastBotMessage}
           </div>
 
           {/* messages */}
