@@ -50,11 +50,18 @@ export function Navbar() {
 
   return (
     <>
+      <a
+        href="#about"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:px-4 focus:py-2 focus:rounded-full focus:bg-[#0C0C0C] focus:text-white focus:outline-none focus:ring-2 focus:ring-[#4a9eff]"
+      >
+        Skip to content
+      </a>
       <motion.nav
         initial={{ y: -24, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.6, ease: [0.25, 0.1, 0.25, 1] }}
         className="fixed top-0 left-0 right-0 z-50 flex justify-center"
+        aria-label="Primary"
       >
         <div
           className={`mt-3 sm:mt-4 transition-all duration-300 ease-out rounded-full px-2 sm:px-3 ${
