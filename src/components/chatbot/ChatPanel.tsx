@@ -218,6 +218,7 @@ export function ChatPanel({
             style={{ borderColor: "rgba(215,226,234,0.08)" }}
           >
             <input
+              ref={inputRef}
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder={PLACEHOLDERS[phIdx]}
