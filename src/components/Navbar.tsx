@@ -76,8 +76,9 @@ export function Navbar() {
               <li key={item}>
                 <a
                   href={`#${SECTION_IDS[item]}`}
-                  className="relative group px-3 lg:px-4 py-2 rounded-full text-[11px] lg:text-xs font-medium tracking-[0.18em] uppercase transition-colors duration-200"
+                  className="relative group px-3 lg:px-4 py-2 rounded-full text-[11px] lg:text-xs font-medium tracking-[0.18em] uppercase transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#60A5FA] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0C0C0C]"
                   style={{ color: linkColor(item) }}
+                  aria-current={active === item ? "page" : undefined}
                   onMouseEnter={(e) => {
                     if (active !== item) e.currentTarget.style.color = "#F8FAFC";
                   }}
