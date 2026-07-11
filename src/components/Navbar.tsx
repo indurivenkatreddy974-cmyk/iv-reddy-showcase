@@ -50,11 +50,18 @@ export function Navbar() {
 
   return (
     <>
+      <a
+        href="#about"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:px-4 focus:py-2 focus:rounded-full focus:bg-[#0C0C0C] focus:text-white focus:outline-none focus:ring-2 focus:ring-[#4a9eff]"
+      >
+        Skip to content
+      </a>
       <motion.nav
         initial={{ y: -24, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.6, ease: [0.25, 0.1, 0.25, 1] }}
         className="fixed top-0 left-0 right-0 z-50 flex justify-center"
+        aria-label="Primary"
       >
         <div
           className={`mt-3 sm:mt-4 transition-all duration-300 ease-out rounded-full px-2 sm:px-3 ${
@@ -69,8 +76,9 @@ export function Navbar() {
               <li key={item}>
                 <a
                   href={`#${SECTION_IDS[item]}`}
-                  className="relative group px-3 lg:px-4 py-2 rounded-full text-[11px] lg:text-xs font-medium tracking-[0.18em] uppercase transition-colors duration-200"
+                  className="relative group px-3 lg:px-4 py-2 rounded-full text-[11px] lg:text-xs font-medium tracking-[0.18em] uppercase transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#60A5FA] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0C0C0C]"
                   style={{ color: linkColor(item) }}
+                  aria-current={active === item ? "page" : undefined}
                   onMouseEnter={(e) => {
                     if (active !== item) e.currentTarget.style.color = "#F8FAFC";
                   }}
@@ -95,9 +103,12 @@ export function Navbar() {
 
           {/* Mobile trigger */}
           <button
+            type="button"
             onClick={() => setOpen(true)}
             aria-label="Open menu"
-            className="md:hidden inline-flex items-center justify-center w-11 h-11 rounded-full text-[#CBD5E1] hover:text-white transition-colors"
+            aria-expanded={open}
+            aria-controls="mobile-nav-menu"
+            className="md:hidden inline-flex items-center justify-center w-11 h-11 rounded-full text-[#CBD5E1] hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#60A5FA]"
           >
             <Menu size={20} />
           </button>
@@ -108,6 +119,10 @@ export function Navbar() {
       <AnimatePresence>
         {open && (
           <motion.div
+            id="mobile-nav-menu"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Navigation menu"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -122,9 +137,10 @@ export function Navbar() {
           >
             <div className="flex items-center justify-end px-6 pt-6">
               <button
+                type="button"
                 onClick={() => setOpen(false)}
                 aria-label="Close menu"
-                className="inline-flex items-center justify-center w-12 h-12 rounded-full text-[#CBD5E1] hover:text-white border border-white/10"
+                className="inline-flex items-center justify-center w-12 h-12 rounded-full text-[#CBD5E1] hover:text-white border border-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#60A5FA]"
               >
                 <X size={22} />
               </button>
@@ -146,7 +162,8 @@ export function Navbar() {
                   <a
                     href={`#${SECTION_IDS[item]}`}
                     onClick={() => setOpen(false)}
-                    className="block w-full text-center py-4 rounded-2xl text-lg font-medium tracking-[0.22em] uppercase border border-white/[0.06] hover:border-white/20 transition-colors"
+                    aria-current={active === item ? "page" : undefined}
+                    className="block w-full text-center py-4 rounded-2xl text-lg font-medium tracking-[0.22em] uppercase border border-white/[0.06] hover:border-white/20 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#60A5FA]"
                     style={{ color: active === item ? "#60A5FA" : "#CBD5E1" }}
                   >
                     {item}

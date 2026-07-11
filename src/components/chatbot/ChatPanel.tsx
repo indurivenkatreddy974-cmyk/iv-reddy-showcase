@@ -36,6 +36,9 @@ export function ChatPanel({
   const [input, setInput] = useState("");
   const [phIdx, setPhIdx] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const previouslyFocusedRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -43,9 +46,53 @@ export function ChatPanel({
     return () => clearInterval(t);
   }, [open]);
 
+  // Focus management: move focus into panel on open, restore on close
+  useEffect(() => {
+    if (!open) return;
+    previouslyFocusedRef.current = document.activeElement as HTMLElement | null;
+    const t = window.setTimeout(() => inputRef.current?.focus(), 80);
+    return () => {
+      window.clearTimeout(t);
+      previouslyFocusedRef.current?.focus?.();
+    };
+  }, [open]);
+
+  // Escape to close + focus trap
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        onClose();
+        return;
+      }
+      if (e.key !== "Tab") return;
+      const root = panelRef.current;
+      if (!root) return;
+      const focusables = root.querySelectorAll<HTMLElement>(
+        'a[href], button:not([disabled]), input, select, textarea, [tabindex]:not([tabindex="-1"])',
+      );
+      if (focusables.length === 0) return;
+      const first = focusables[0];
+      const last = focusables[focusables.length - 1];
+      const active = document.activeElement as HTMLElement | null;
+      if (e.shiftKey && active === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && active === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open, onClose]);
+
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages]);
+
+  const lastBotMessage = [...messages].reverse().find((m) => m.role === "bot")?.text ?? "";
 
   const send = (raw: string) => {
     const text = raw.trim();
@@ -89,6 +136,10 @@ export function ChatPanel({
       {open && (
         <motion.div
           key="panel"
+          ref={panelRef}
+          role="dialog"
+          aria-modal="false"
+          aria-label="IV Assistant chat"
           initial={{ opacity: 0, scale: 0.85, y: 30, filter: "blur(20px)" }}
           animate={{ opacity: 1, scale: 1, y: 0, filter: "blur(0px)" }}
           exit={{ opacity: 0, scale: 0.9, y: 20, filter: "blur(20px)" }}
@@ -105,13 +156,18 @@ export function ChatPanel({
           {/* header */}
           <div className="px-5 py-4 border-b" style={{ borderColor: "rgba(215,226,234,0.08)" }}>
             <div className="flex items-center gap-3">
-              <span className="w-2 h-2 rounded-full" style={{ background: "#4a9eff", boxShadow: "0 0 10px #4a9eff" }} />
+              <span className="w-2 h-2 rounded-full" style={{ background: "#4a9eff", boxShadow: "0 0 10px #4a9eff" }} aria-hidden />
               <div className="text-xs uppercase tracking-[0.3em] text-[#D7E2EA]/80">IV · Assistant</div>
             </div>
           </div>
 
+          {/* live region for screen readers */}
+          <div role="status" aria-live="polite" aria-atomic="true" className="sr-only">
+            {lastBotMessage}
+          </div>
+
           {/* messages */}
-          <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-3">
+          <div ref={scrollRef} role="log" aria-label="Chat messages" aria-live="polite" className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-3">
             {messages.map((m) => (
               <motion.div
                 key={m.id}
@@ -138,12 +194,13 @@ export function ChatPanel({
           </div>
 
           {/* chips */}
-          <div className="px-4 pb-2 flex flex-wrap gap-2">
+          <div className="px-4 pb-2 flex flex-wrap gap-2" role="group" aria-label="Quick actions">
             {QUICK_CHIPS.map((c) => (
               <button
+                type="button"
                 key={c.label}
                 onClick={() => handleChip(c.href, c.label)}
-                className="text-[11px] uppercase tracking-widest px-3 py-1.5 rounded-full border transition hover:bg-[#D7E2EA]/10"
+                className="text-[11px] uppercase tracking-widest px-3 py-1.5 rounded-full border transition hover:bg-[#D7E2EA]/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4a9eff] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0C0C0C]"
                 style={{ borderColor: "rgba(215,226,234,0.2)", color: "#D7E2EA" }}
               >
                 {c.label}
@@ -161,6 +218,7 @@ export function ChatPanel({
             style={{ borderColor: "rgba(215,226,234,0.08)" }}
           >
             <input
+              ref={inputRef}
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder={PLACEHOLDERS[phIdx]}
