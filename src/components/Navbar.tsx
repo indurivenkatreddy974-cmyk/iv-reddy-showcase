@@ -103,9 +103,12 @@ export function Navbar() {
 
           {/* Mobile trigger */}
           <button
+            type="button"
             onClick={() => setOpen(true)}
             aria-label="Open menu"
-            className="md:hidden inline-flex items-center justify-center w-11 h-11 rounded-full text-[#CBD5E1] hover:text-white transition-colors"
+            aria-expanded={open}
+            aria-controls="mobile-nav-menu"
+            className="md:hidden inline-flex items-center justify-center w-11 h-11 rounded-full text-[#CBD5E1] hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#60A5FA]"
           >
             <Menu size={20} />
           </button>
