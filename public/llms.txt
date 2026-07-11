@@ -1,0 +1,7 @@
+# IV Reddy — Portfolio
+
+> Portfolio of IV Reddy: featured work, projects, services, internships, certifications, education, and contact info.
+
+## Pages
+
+- [Home](/): Hero, about, featured work, projects, services, tech stack, timeline, internships, education, certifications, and contact — the full portfolio on one page.

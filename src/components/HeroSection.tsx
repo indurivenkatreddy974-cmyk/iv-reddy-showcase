@@ -50,7 +50,12 @@ export function HeroSection() {
               alt={`${hero.name} portrait`}
               className="relative w-full h-auto"
               loading="eager"
+              fetchPriority="high"
+              decoding="async"
+              width={1024}
+              height={1280}
             />
+
           </div>
         </FadeIn>
       </Magnet>
